@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Python virtualenv shortcuts
+alias workon='source activate'
+alias workoff='source deactivate'
+
 # Easier navigation: .., ..., ...., ....., ~ and -
 alias ..="cd .."
 alias ...="cd ../.."
