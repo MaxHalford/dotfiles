@@ -6,13 +6,13 @@
 
 ```sh
 cd ~/projects/
-git clone https://github.com/mathiasbynens/dotfiles.git && cd dotfiles && source bootstrap.sh
+git clone https://github.com/mathiasbynens/dotfiles.git && cd dotfiles && ./bootstrap.sh
 ```
 
-To update, `cd` into your local `dotfiles` repository and then:
+To update, `cd` into the `dotfiles` folder and then:
 
 ```sh
-source bootstrap.sh
+./bootstrap.sh
 ```
 
 ### Sublime Text 3 settings
@@ -21,8 +21,8 @@ source bootstrap.sh
 
 ```sh
 cd ~/Library/Application\ Support/Sublime\ Text\ 3
-ln -s ~/projects/dotfiles/Sublime\ Text\ 3/Installed\ Packages ./Installed\ Packages
-ln -s ~/projects/dotfiles/Sublime\ Text\ 3/Packages ./Packages
+ln ~/projects/dotfiles/Sublime\ Text\ 3/Installed\ Packages ./Installed\ Packages
+ln ~/projects/dotfiles/Sublime\ Text\ 3/Packages ./Packages
 ln ~/projects/dotfiles/Sublime\ Text\ 3/Preferences.sublime-settings ./Packages/User/
 ```
 
