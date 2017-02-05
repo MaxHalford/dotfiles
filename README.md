@@ -23,7 +23,7 @@ source bootstrap.sh
 cd ~/Library/Application\ Support/Sublime\ Text\ 3
 ln -s ~/projects/dotfiles/Sublime\ Text\ 3/Installed\ Packages ./Installed\ Packages
 ln -s ~/projects/dotfiles/Sublime\ Text\ 3/Packages ./Packages
-ln -s ~/projects/dotfiles/Sublime\ Text\ 3/Preferences.sublime-settings ./Packages/User
+ln ~/projects/dotfiles/Sublime\ Text\ 3/Preferences.sublime-settings ./Packages/User/
 ```
 
 ### Sensible macOS defaults
