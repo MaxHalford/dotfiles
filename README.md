@@ -2,6 +2,17 @@
 
 ## Installation
 
+### Initial required software
+
+- [Homebrew](http://brew.sh/)
+- [iterm2](https://www.iterm2.com/index.html)
+
+### Install Homebrew formulae
+
+```sh
+./brew.sh
+```
+
 ### Using Git and the bootstrap script
 
 ```sh
@@ -26,18 +37,14 @@ ln ~/projects/dotfiles/Sublime\ Text\ 3/Packages ./Packages
 ln ~/projects/dotfiles/Sublime\ Text\ 3/Preferences.sublime-settings ./Packages/User/
 ```
 
-### Sensible macOS defaults
+### iterm2 settings
 
-When setting up a new Mac, you may want to set some sensible macOS defaults:
+- Open iterm2
+- Go to <kbd>Preferences</kbd> > <kbd>General</kbd>
+- In the preferences part click on <kbd>Browse</kbd> and choose the `iterm2_profile/` folder
+
+### Sensible macOS defaults
 
 ```sh
 ./.macos
-```
-
-### Install Homebrew formulae
-
-When setting up a new Mac, you may want to install some common [Homebrew](http://brew.sh/) formulae (after installing Homebrew, of course):
-
-```sh
-./brew.sh
 ```
