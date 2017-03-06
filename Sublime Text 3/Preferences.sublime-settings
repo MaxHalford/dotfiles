@@ -1,4 +1,8 @@
 {
+	"added_words":
+	[
+		"halftoning"
+	],
 	"color_scheme": "Packages/User/SublimeLinter/Agila Dracula (SL).tmTheme",
 	"ensure_newline_at_eof_on_save": true,
 	"file_exclude_patterns":
