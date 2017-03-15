@@ -6,7 +6,12 @@
 		"offsprings",
 		"neighbour",
 		"speciation",
-		"Programmatically"
+		"Programmatically",
+		"Voronoi",
+		"blog",
+		"blogs",
+		"centroidal",
+		"vertices"
 	],
 	"color_scheme": "Packages/User/SublimeLinter/Agila Dracula (SL).tmTheme",
 	"ensure_newline_at_eof_on_save": true,
