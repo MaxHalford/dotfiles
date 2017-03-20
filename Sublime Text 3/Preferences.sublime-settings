@@ -11,7 +11,11 @@
 		"blog",
 		"blogs",
 		"centroidal",
-		"vertices"
+		"vertices",
+		"online",
+		"grayscale",
+		"radiuses",
+		"pointillisme"
 	],
 	"color_scheme": "Packages/User/SublimeLinter/Agila Dracula (SL).tmTheme",
 	"ensure_newline_at_eof_on_save": true,
