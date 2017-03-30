@@ -15,7 +15,11 @@
 		"online",
 		"grayscale",
 		"radiuses",
-		"pointillisme"
+		"pointillisme",
+		"adstock",
+		"dataframe",
+		"dataframes",
+		"eg"
 	],
 	"color_scheme": "Packages/User/SublimeLinter/Agila Dracula (SL).tmTheme",
 	"ensure_newline_at_eof_on_save": true,
