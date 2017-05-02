@@ -165,3 +165,12 @@ alias reload="exec $SHELL -l"
 
 # Print each PATH entry on a separate line
 alias path='echo -e ${PATH//:/\\n}'
+
+# Docker remove all volumes
+alias dockercleanv='docker volume rm $(docker volume ls -f dangling=true -q)'
+
+# Docker delete all containers
+alias dockercleanc='rm $(docker ps -a -q)'
+
+# Docker delete all images
+alias dockercleani='docker rmi -f $(docker images -a -q)'
