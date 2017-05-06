@@ -30,4 +30,4 @@ export LESS_TERMCAP_md="${yellow}";
 export MANPAGER='less -X';
 
 # Tensorflow compilation warning
-export TF_CPP_MIN_LOG_LEVEL='2';
+export TF_CPP_MIN_LOG_LEVEL=2;
