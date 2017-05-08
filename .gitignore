@@ -4,6 +4,9 @@
 # IPython notebook checkpoints
 .ipynb_checkpoints/
 
+# R stuff
+.Rapp.history
+
 # Folder view configuration files
 .DS_Store
 Desktop.ini
