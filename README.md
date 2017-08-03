@@ -17,7 +17,7 @@
 
 ```sh
 cd ~/projects/
-git clone https://github.com/mathiasbynens/dotfiles.git && cd dotfiles && ./bootstrap.sh
+git clone https://github.com/MaxHalford/dotfiles && cd dotfiles && ./bootstrap.sh
 ```
 
 To update, `cd` into the `dotfiles` folder and then:
