@@ -32,7 +32,6 @@
 			"selector": "source.python"
 		}
 	],
-	"color_scheme": "Packages/User/SublimeLinter/Agila Dracula (SL).tmTheme",
 	"ensure_newline_at_eof_on_save": true,
 	"file_exclude_patterns":
 	[
@@ -58,6 +57,7 @@
 		100
 	],
 	"theme": "Agila Dracula.sublime-theme",
+	"color_scheme": "Packages/Agila Theme/Agila Dracula.tmTheme",
 	"translate_tabs_to_spaces": true,
-	"trim_trailing_white_space_on_save": true,
+	"trim_trailing_white_space_on_save": true
 }
