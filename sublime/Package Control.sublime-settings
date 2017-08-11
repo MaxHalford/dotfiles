@@ -7,8 +7,11 @@
 	[
 		"Agila Theme",
 		"Babel",
+		"Emmet",
 		"GoSublime",
 		"Package Control",
-		"SideBarEnhancements"
+		"SideBarEnhancements",
+		"SublimeLinter",
+		"SublimeLinter-contrib-standard"
 	]
 }
