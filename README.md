@@ -31,10 +31,7 @@ To update, `cd` into the `dotfiles` folder and then:
 [Install Sublime Text 3](https://www.sublimetext.com/3) and then:
 
 ```sh
-cd ~/Library/Application\ Support/Sublime\ Text\ 3
-ln ~/projects/dotfiles/Sublime\ Text\ 3/Installed\ Packages ./Installed\ Packages
-ln ~/projects/dotfiles/Sublime\ Text\ 3/Packages ./Packages
-ln ~/projects/dotfiles/Sublime\ Text\ 3/Preferences.sublime-settings ./Packages/User/
+ln -s sublime/ ~/Library/Application\ Support/Sublime\ Text\ 3/Packages/User
 ```
 
 ### iterm2 settings

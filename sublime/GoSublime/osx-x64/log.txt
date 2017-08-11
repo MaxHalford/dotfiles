@@ -1,0 +1,4 @@
+Gocode pkg: "github.com/MaxHalford/xgp"
+Gocode env: gocode.margoEnv{LibPath:"/usr/local/Cellar/go/1.8.3/libexec/pkg/darwin_amd64:/Users/max/go/pkg/darwin_amd64", GOOS:"darwin", GOARCH:"amd64", Compiler:"gc", GOROOT:"/usr/local/Cellar/go/1.8.3/libexec", GOPATH:"/Users/max/go", InstallSuffix:""}
+Gocode pkg: "github.com/MaxHalford/xgp"
+Gocode env: gocode.margoEnv{LibPath:"/usr/local/Cellar/go/1.8.3/libexec/pkg/darwin_amd64:/Users/max/go/pkg/darwin_amd64", GOOS:"darwin", GOARCH:"amd64", Compiler:"gc", GOROOT:"/usr/local/Cellar/go/1.8.3/libexec", GOPATH:"/Users/max/go", InstallSuffix:""}
