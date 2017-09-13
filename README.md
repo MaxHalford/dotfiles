@@ -13,14 +13,7 @@
 ./brew.sh
 ```
 
-### Using Git and the bootstrap script
-
-```sh
-cd ~/projects/
-git clone https://github.com/MaxHalford/dotfiles && cd dotfiles && ./bootstrap.sh
-```
-
-To update, `cd` into the `dotfiles` folder and then:
+### Boostrap script
 
 ```sh
 ./bootstrap.sh
@@ -31,7 +24,7 @@ To update, `cd` into the `dotfiles` folder and then:
 [Install Sublime Text 3](https://www.sublimetext.com/3) and then:
 
 ```sh
-ln -s sublime/ ~/Library/Application\ Support/Sublime\ Text\ 3/Packages/User
+ln -s sublime/* ~/Library/Application\ Support/Sublime\ Text\ 3/Packages/User
 ```
 
 ### iterm2 settings
