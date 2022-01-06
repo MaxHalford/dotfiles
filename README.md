@@ -16,7 +16,7 @@ brew install docker docker-compose zsh
 brew install --cask anaconda iterm2 visual-studio-code
 ```
 
-For iterm2, go to `General > Preferences`, click on `Load preferences from a custom folder or URL`, and select the `iterm2_profile` folder. Also set `Save changes` to `Automatically` so that changes are synced.
+For iterm2, go to `General > Preferences`, click on `Load preferences from a custom folder or URL`, and select the `iterm2` folder. Also set `Save changes` to `Automatically` so that changes are synced.
 
 ## Linux specific
 
