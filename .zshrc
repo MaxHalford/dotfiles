@@ -8,7 +8,18 @@ export ZSH="/Users/${USER}/.oh-my-zsh"
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="gallois"
+ZSH_THEME="bullet-train"
+export TERM="xterm-256color"
+BULLETTRAIN_GIT_ADDED=""
+BULLETTRAIN_GIT_MODIFIED=""
+BULLETTRAIN_GIT_DELETED=""
+BULLETTRAIN_GIT_UNTRACKED=""
+BULLETTRAIN_GIT_RENAMED=""
+BULLETTRAIN_GIT_UNMERGED=""
+BULLETTRAIN_PROMPT_ORDER=(
+  dir
+  git
+)
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load

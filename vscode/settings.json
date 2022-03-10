@@ -1,6 +1,6 @@
 {
   "editor.hover.enabled": false,
-  "editor.fontFamily": "Cascadia Code",
+  "editor.fontFamily": "Rec Mono Linear",
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
   "explorer.confirmDelete": false,
@@ -14,7 +14,7 @@
   "editor.rulers": [100],
   "editor.autoClosingQuotes": "never",
   "editor.wordWrap": "on",
-  "editor.fontSize": 15,
+  "editor.fontSize": 16,
   "editor.occurrencesHighlight": false,
   "editor.hideCursorInOverviewRuler": true,
   "editor.overviewRulerBorder": false,
@@ -87,5 +87,6 @@
   "workbench.iconTheme": "file-icons",
   "editor.smoothScrolling": true,
   "workbench.list.smoothScrolling": true,
-  "workbench.list.mouseWheelScrollSensitivity": 0.7
+  "workbench.list.mouseWheelScrollSensitivity": 0.7,
+"security.workspace.trust.untrustedFiles": "open"
 }
