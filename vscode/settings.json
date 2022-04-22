@@ -88,5 +88,6 @@
   "editor.smoothScrolling": true,
   "workbench.list.smoothScrolling": true,
   "workbench.list.mouseWheelScrollSensitivity": 0.7,
-"security.workspace.trust.untrustedFiles": "open"
+"security.workspace.trust.untrustedFiles": "open",
+"tabnine.experimentalAutoImports": true
 }
