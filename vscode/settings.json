@@ -14,7 +14,7 @@
   "editor.rulers": [100],
   "editor.autoClosingQuotes": "never",
   "editor.wordWrap": "on",
-  "editor.fontSize": 16,
+  "editor.fontSize": 14,
   "editor.occurrencesHighlight": false,
   "editor.hideCursorInOverviewRuler": true,
   "editor.overviewRulerBorder": false,
@@ -60,7 +60,7 @@
   "git.decorations.enabled": false,
   "window.autoDetectColorScheme": true,
   "workbench.preferredDarkColorTheme": "Rosé Pine",
-  "workbench.preferredLightColorTheme": "Huacat Pink Theme",
+  "workbench.preferredLightColorTheme": "Rosé Pine Dawn",
   "[json]": {
     "editor.quickSuggestions": {
       "strings": true
@@ -68,7 +68,7 @@
     "editor.suggest.insertMode": "replace",
     "gitlens.codeLens.scopes": ["document"]
   },
-  "workbench.colorTheme": "Huacat Pink Theme",
+  "workbench.colorTheme": "Rosé Pine Dawn",
   "git.autofetch": true,
   "notebook.cellToolbarLocation": {
     "default": "right",
@@ -83,11 +83,13 @@
     "**/target/**": ""
   },
   "workbench.preferredHighContrastColorTheme": "Rosé Pine",
-  "workbench.activityBar.visible": false,
-  "workbench.iconTheme": "file-icons",
+"workbench.activityBar.visible": false,
   "editor.smoothScrolling": true,
   "workbench.list.smoothScrolling": true,
   "workbench.list.mouseWheelScrollSensitivity": 0.7,
 "security.workspace.trust.untrustedFiles": "open",
-"tabnine.experimentalAutoImports": true
+"tabnine.experimentalAutoImports": true,
+"workbench.preferredHighContrastLightColorTheme": "Rosé Pine Dawn",
+"workbench.statusBar.visible": false,
+"workbench.iconTheme": "file-icons-colourless"
 }
