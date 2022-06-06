@@ -158,3 +158,5 @@ export NVM_DIR="$HOME/.nvm"
 
 export PATH="/Users/max.halford/.local/bin:$PATH"
 
+
+export PATH="$HOME/.poetry/bin:$PATH"
