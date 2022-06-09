@@ -1259,6 +1259,10 @@
 	</dict>
 	<key>Default Bookmark Guid</key>
 	<string>3AE83103-B379-4E86-B7B0-C3388A118614</string>
+	<key>DimBackgroundWindows</key>
+	<false/>
+	<key>DimInactiveSplitPanes</key>
+	<false/>
 	<key>DisableFullscreenTransparency</key>
 	<false/>
 	<key>HapticFeedbackForEsc</key>
@@ -2074,7 +2078,7 @@
 			<key>Non-ASCII Ligatures</key>
 			<true/>
 			<key>Normal Font</key>
-			<string>RecMonoLinear-Regular 16</string>
+			<string>RecMonoLinear-Regular 15</string>
 			<key>Option Key Sends</key>
 			<integer>0</integer>
 			<key>Prompt Before Closing 2</key>
@@ -2151,7 +2155,7 @@
 			<key>Use Non-ASCII Font</key>
 			<true/>
 			<key>Vertical Spacing</key>
-			<real>1</real>
+			<real>1.1100000000000001</real>
 			<key>Visual Bell</key>
 			<true/>
 			<key>Window Type</key>
@@ -2208,11 +2212,15 @@
 	<key>SoundForEsc</key>
 	<false/>
 	<key>SplitPaneDimmingAmount</key>
-	<real>0.29646790143355584</real>
+	<real>0.24247451337795814</real>
 	<key>StatusBarPosition</key>
 	<integer>0</integer>
 	<key>TabStyleWithAutomaticOption</key>
 	<integer>5</integer>
+	<key>TerminalMargin</key>
+	<integer>16</integer>
+	<key>TerminalVMargin</key>
+	<integer>13</integer>
 	<key>UseBorder</key>
 	<false/>
 	<key>VisualIndicatorForEsc</key>
