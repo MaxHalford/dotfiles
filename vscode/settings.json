@@ -25,7 +25,6 @@
   "explorer.confirmDragAndDrop": false,
   "editor.renderWhitespace": "none",
   "editor.renderControlCharacters": true,
-  "timeline.excludeSources": ["git-history"],
   "[vue]": {
     "editor.tabSize": 2,
     "editor.defaultFormatter": "octref.vetur"
@@ -83,13 +82,13 @@
     "**/target/**": ""
   },
   "workbench.preferredHighContrastColorTheme": "Rosé Pine",
-"workbench.activityBar.visible": false,
+  "workbench.activityBar.visible": false,
   "editor.smoothScrolling": true,
   "workbench.list.smoothScrolling": true,
   "workbench.list.mouseWheelScrollSensitivity": 0.7,
-"security.workspace.trust.untrustedFiles": "open",
-"tabnine.experimentalAutoImports": true,
-"workbench.preferredHighContrastLightColorTheme": "Rosé Pine Dawn",
-"workbench.statusBar.visible": false,
-"workbench.iconTheme": "file-icons-colourless"
+  "security.workspace.trust.untrustedFiles": "open",
+  "tabnine.experimentalAutoImports": true,
+  "workbench.preferredHighContrastLightColorTheme": "Rosé Pine Dawn",
+  "workbench.statusBar.visible": false,
+  "workbench.iconTheme": "vscode-icons"
 }

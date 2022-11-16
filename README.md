@@ -35,7 +35,7 @@ For VSCode, you have to install extensions manually, as so:
 ```sh
 while read extension; do
   code --install-extension $extension
-done <vscode/extensions.txt
+done < vscode/extensions.txt
 ```
 
 You'll have to update the list of extensions if you install a new one, like this:

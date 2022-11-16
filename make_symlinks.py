@@ -24,7 +24,9 @@ SYMLINKS = [
     ("vscode/settings.json", "~/Library/Application\\ Support/Code/User"),
     ("vscode/keybinding.json", "~/Library/Application\\ Support/Code/User"),
     ("vscode/snippets", "~/Library/Application\\ Support/Code/User"),
+    (".ipython/profile_default/startup", "/Users/max/.ipython/profile_default"),
     (".zshrc", "~/"),
+    (".p10k.zsh", "~/"),
 ]
 
 
