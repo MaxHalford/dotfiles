@@ -14,7 +14,6 @@
   "editor.rulers": [100],
   "editor.autoClosingQuotes": "never",
   "editor.wordWrap": "on",
-  "editor.fontSize": 14,
   "editor.occurrencesHighlight": false,
   "editor.hideCursorInOverviewRuler": true,
   "editor.overviewRulerBorder": false,
@@ -60,6 +59,8 @@
   "window.autoDetectColorScheme": true,
   "workbench.preferredDarkColorTheme": "Rosé Pine",
   "workbench.preferredLightColorTheme": "Rosé Pine Dawn",
+  "window.zoomLevel": 0.8,
+  "editor.fontSize": 13,
   "[json]": {
     "editor.quickSuggestions": {
       "strings": true
@@ -67,7 +68,7 @@
     "editor.suggest.insertMode": "replace",
     "gitlens.codeLens.scopes": ["document"]
   },
-  "workbench.colorTheme": "Rosé Pine Dawn",
+  "workbench.colorTheme": "Rosé Pine",
   "git.autofetch": true,
   "notebook.cellToolbarLocation": {
     "default": "right",
@@ -90,5 +91,6 @@
   "tabnine.experimentalAutoImports": true,
   "workbench.preferredHighContrastLightColorTheme": "Rosé Pine Dawn",
   "workbench.statusBar.visible": false,
-  "workbench.iconTheme": "vscode-icons"
+  "workbench.iconTheme": "vscode-icons",
+  "editor.inlineSuggest.enabled": true
 }

@@ -152,3 +152,8 @@ export PATH="/Users/max/.local/bin:$PATH"
 # chruby ruby-3.1.2
 
 PATH="/Applications/Postgres.app/Contents/Versions/latest/bin:$PATH"
+
+# OpenBLAS
+export OPENBLAS=$(/opt/homebrew/bin/brew --prefix openblas)
+export CFLAGS="-falign-functions=8 ${CFLAGS}"
+export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"

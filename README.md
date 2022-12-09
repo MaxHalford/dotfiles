@@ -14,6 +14,7 @@ cd dotfiles
 ```sh
 brew install docker docker-compose zsh
 brew install --cask anaconda iterm2 visual-studio-code
+curl https://raw.githubusercontent.com/github/gitignore/master/Global/macOS.gitignore -o ~/.gitignore
 ```
 
 For iterm2, go to `General > Preferences`, click on `Load preferences from a custom folder or URL`, and select the `iterm2` folder. Also set `Save changes` to `Automatically` so that changes are synced.
