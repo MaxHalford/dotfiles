@@ -157,3 +157,8 @@ PATH="/Applications/Postgres.app/Contents/Versions/latest/bin:$PATH"
 export OPENBLAS=$(/opt/homebrew/bin/brew --prefix openblas)
 export CFLAGS="-falign-functions=8 ${CFLAGS}"
 export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
+
+# Secret environment variables
+if [ -f  ~/.secrets ]; then
+    source ~/.secrets
+fi

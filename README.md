@@ -9,6 +9,15 @@ git clone https://github.com/MaxHalford/dotfiles
 cd dotfiles
 ```
 
+## Secret environment variables
+
+Optionally, create a `~/.secrets` file.
+
+```sh
+export POETRY_HTTP_BASIC_PYPI_USERNAME=<keep_it_secret>
+export POETRY_HTTP_BASIC_PYPI_PASSWORD=<keep_it_safe>
+```
+
 ## MacOS specific
 
 ```sh
