@@ -11,6 +11,11 @@
     "**/*.pyc": true
   },
   "typescript.suggest.paths": false,
+  "editor.folding": false, // removes the folding feature
+  "editor.scrollbar.horizontal": "hidden",
+  "editor.scrollbar.vertical": "hidden",
+  "editor.lineNumbers": "on",
+
   "editor.rulers": [100],
   "editor.autoClosingQuotes": "never",
   "editor.wordWrap": "on",
@@ -19,6 +24,7 @@
   "editor.overviewRulerBorder": false,
   "editor.glyphMargin": false,
   "editor.renderLineHighlight": "none", // side-menu
+  "workbench.editor.tabCloseButton": "off",
   "workbench.editor.showIcons": false,
   "explorer.openEditors.visible": 0,
   "explorer.confirmDragAndDrop": false,
@@ -57,18 +63,16 @@
   "go.toolsManagement.autoUpdate": true,
   "git.decorations.enabled": false,
   "window.autoDetectColorScheme": true,
-  "workbench.preferredDarkColorTheme": "Rosé Pine",
+  "workbench.preferredDarkColorTheme": "Rosé Pine Moon",
   "workbench.preferredLightColorTheme": "Rosé Pine Dawn",
-  "window.zoomLevel": 0.8,
   "editor.fontSize": 13,
   "[json]": {
     "editor.quickSuggestions": {
       "strings": true
     },
-    "editor.suggest.insertMode": "replace",
-    "gitlens.codeLens.scopes": ["document"]
+    "editor.suggest.insertMode": "replace"
   },
-  "workbench.colorTheme": "Rosé Pine",
+  "workbench.colorTheme": "Rosé Pine Moon",
   "git.autofetch": true,
   "notebook.cellToolbarLocation": {
     "default": "right",
@@ -92,5 +96,6 @@
   "workbench.preferredHighContrastLightColorTheme": "Rosé Pine Dawn",
   "workbench.statusBar.visible": false,
   "workbench.iconTheme": "vscode-icons",
-  "editor.inlineSuggest.enabled": true
+  "editor.inlineSuggest.enabled": true,
+  "window.zoomLevel": 1
 }
