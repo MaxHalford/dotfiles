@@ -72,7 +72,7 @@
     },
     "editor.suggest.insertMode": "replace"
   },
-  "workbench.colorTheme": "Rosé Pine Moon",
+  "workbench.colorTheme": "Rosé Pine Dawn",
   "git.autofetch": true,
   "notebook.cellToolbarLocation": {
     "default": "right",
