@@ -72,7 +72,7 @@
     },
     "editor.suggest.insertMode": "replace"
   },
-  "workbench.colorTheme": "Rosé Pine Dawn",
+  "workbench.colorTheme": "Rosé Pine Moon",
   "git.autofetch": true,
   "notebook.cellToolbarLocation": {
     "default": "right",
@@ -97,5 +97,6 @@
   "workbench.statusBar.visible": false,
   "workbench.iconTheme": "vscode-icons",
   "editor.inlineSuggest.enabled": true,
-  "window.zoomLevel": 1
+  "window.zoomLevel": 1,
+  "workbench.layoutControl.enabled": false
 }
