@@ -15,7 +15,6 @@
   "editor.scrollbar.horizontal": "hidden",
   "editor.scrollbar.vertical": "hidden",
   "editor.lineNumbers": "on",
-
   "editor.rulers": [100],
   "editor.autoClosingQuotes": "never",
   "editor.wordWrap": "on",
@@ -46,7 +45,6 @@
     "editor.tabSize": 2
   },
   "python.languageServer": "Jedi",
-  "jupyter.sendSelectionToInteractiveWindow": false,
   "editor.formatOnSave": true,
   "go.formatTool": "goimports",
   "python.formatting.provider": "black",
@@ -72,7 +70,7 @@
     },
     "editor.suggest.insertMode": "replace"
   },
-  "workbench.colorTheme": "Rosé Pine Moon",
+  "workbench.colorTheme": "Rosé Pine Dawn",
   "git.autofetch": true,
   "notebook.cellToolbarLocation": {
     "default": "right",
@@ -80,7 +78,6 @@
   },
   "jupyter.askForKernelRestart": false,
   "editor.minimap.enabled": false,
-  "gitlens.blame.highlight.locations": ["gutter", "line"],
   "breadcrumbs.enabled": false,
   "files.associations": {
     "*.sql": "jinja-sql",
@@ -92,11 +89,12 @@
   "workbench.list.smoothScrolling": true,
   "workbench.list.mouseWheelScrollSensitivity": 0.7,
   "security.workspace.trust.untrustedFiles": "open",
-  "tabnine.experimentalAutoImports": true,
   "workbench.preferredHighContrastLightColorTheme": "Rosé Pine Dawn",
   "workbench.statusBar.visible": false,
   "workbench.iconTheme": "vscode-icons",
   "editor.inlineSuggest.enabled": true,
-  "window.zoomLevel": 1,
-  "workbench.layoutControl.enabled": false
+  "workbench.layoutControl.enabled": false,
+  "notebook.output.textLineLimit": 100,
+  "jupyter.interactiveWindow.textEditor.executeSelection": false,
+  "window.zoomLevel": 1
 }
