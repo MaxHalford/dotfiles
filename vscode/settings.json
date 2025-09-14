@@ -1,149 +1,159 @@
 {
-  //"editor.fontFamily": "Rec Mono Linear",
-  "editor.fontFamily": "Rec Mono Linear",
-  "apc.parts.font.family": {
-    "sidebar": "Jetbrains Mono",
-    "titlebar": "Jetbrains Mono",
-    "activityBar": "Jetbrains Mono",
-    "panel": "Jetbrains Mono",
-    "tabs": "Jetbrains Mono",
-    "statusbar": "Jetbrains Mono",
-    "settings-body": "Jetbrains Mono",
-    "extension-editor": "Jetbrains Mono"
-  },
-  //"editor.fontFamily": "'JetBrains Mono Nerd Font",
-  "editor.fontLigatures": false,
-  "files.insertFinalNewline": true,
-  "files.trimTrailingWhitespace": true,
-  "sql-formatter.uppercase": true,
-  "workbench.editor.labelFormat": "medium",
-  "explorer.confirmDelete": false,
-  "terminal.integrated.inheritEnv": false,
-  "files.exclude": {
-    "**/__pycache__": true,
-    "**/.ipynb_checkpoints": true,
-    "**/*.pyc": true
-  },
-  "[python]": {
-    "editor.hover.enabled": true,
-    // "editor.defaultFormatter": null,
-    // "editor.formatOnSave": true,
-    // "editor.codeActionsOnSave": {
-    //   "source.fixAll": "explicit"
-    // }
-    "editor.defaultFormatter": null,
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-        "source.fixAll": "explicit"
-    }
-  },
-  "typescript.suggest.paths": false,
-  "editor.folding": false, // removes the folding feature
-  "editor.scrollbar.horizontal": "hidden",
-  "editor.scrollbar.vertical": "hidden",
-  "editor.lineNumbers": "on",
-  "editor.rulers": [100],
-  "editor.autoClosingQuotes": "never",
-  "editor.wordWrap": "on",
-  "editor.occurrencesHighlight": "off",
-  "editor.hideCursorInOverviewRuler": true,
-  "editor.overviewRulerBorder": false,
-  "editor.glyphMargin": true,
-  "editor.renderLineHighlight": "none", // side-menu
-  "workbench.editor.tabCloseButton": "off",
-  "workbench.editor.showIcons": false,
-  "explorer.openEditors.visible": 1,
-
-  "explorer.confirmDragAndDrop": false,
-  "editor.renderWhitespace": "none",
-  "editor.renderControlCharacters": true,
-
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-
-  "[sql]": {
-    "editor.tabSize": 4,
-    // Insert spaces when pressing Tab.
-    "editor.insertSpaces": true,
-    // When opening a file, `editor.tabSize` and `editor.insertSpaces` will be detected based on the file contents.
-    "editor.detectIndentation": true
-  },
-  "editor.detectIndentation": false,
-  "[javascript]": {
-    "editor.tabSize": 2,
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "python.languageServer": "Pylance",
-  "editor.formatOnSave": true,
-  "go.formatTool": "goimports",
-  "workbench.editorAssociations": {
-    "*.ipynb": "jupyter-notebook"
-  },
-  "jupyter.alwaysTrustNotebooks": true,
-  "window.title": "",
-  "editor.multiCursorModifier": "alt",
-  "diffEditor.renderSideBySide": false,
-  "python.testing.autoTestDiscoverOnSaveEnabled": true,
-  "editor.cursorBlinking": "solid",
-  "go.toolsManagement.autoUpdate": true,
-  "git.decorations.enabled": false,
-  "window.autoDetectColorScheme": true,
-  "workbench.preferredDarkColorTheme": "Rosé Pine Moon",
-  "workbench.preferredLightColorTheme": "Rosé Pine Dawn",
-  "editor.fontSize": 13,
-  "github.copilot.enable": {
-    "*": true,
-    "plaintext": true,
-    "markdown": true,
-    "yaml": false
-  },
-  "[json]": {
-    "editor.quickSuggestions": {
-      "strings": true
+    //"editor.fontFamily": "Rec Mono Linear",
+    "editor.fontFamily": "Rec Mono Linear",
+    "apc.parts.font.family": {
+        "sidebar": "Jetbrains Mono",
+        "titlebar": "Jetbrains Mono",
+        "activityBar": "Jetbrains Mono",
+        "panel": "Jetbrains Mono",
+        "tabs": "Jetbrains Mono",
+        "statusbar": "Jetbrains Mono",
+        "settings-body": "Jetbrains Mono",
+        "extension-editor": "Jetbrains Mono"
     },
-    "editor.suggest.insertMode": "replace"
-  },
-  "workbench.colorTheme": "Rosé Pine Dawn",
-  "git.autofetch": true,
-  "notebook.cellToolbarLocation": {
-    "default": "right",
-    "jupyter-notebook": "left"
-  },
-  "jupyter.askForKernelRestart": false,
-  "editor.minimap.enabled": false,
-  "files.associations": {
-    "*.sql": "jinja-sql",
-    "**/target/**": ""
-  },
-  "workbench.preferredHighContrastColorTheme": "Rosé Pine",
-  "editor.smoothScrolling": true,
-  "workbench.list.smoothScrolling": true,
-  "workbench.list.mouseWheelScrollSensitivity": 0.7,
-  "security.workspace.trust.untrustedFiles": "open",
-  "workbench.preferredHighContrastLightColorTheme": "Rosé Pine Dawn",
-  "workbench.statusBar.visible": false,
-  "workbench.iconTheme": "catppuccin-latte",
-  "editor.inlineSuggest.enabled": true,
-  "workbench.layoutControl.enabled": false,
-  "notebook.output.textLineLimit": 100,
-  "jupyter.interactiveWindow.textEditor.executeSelection": false,
-  "[rust]": {
-    "editor.defaultFormatter": "rust-lang.rust-analyzer",
-    "editor.formatOnSave": true // Optional
-  },
-  "git.openRepositoryInParentFolders": "never",
-  "window.commandCenter": false,
-  "workbench.activityBar.location": "hidden",
-  "workbench.editor.tabActionCloseVisibility": false,
-  "terminal.integrated.env.osx": {
-    "CW_NEW_SESSION": "1",
-    "FIG_NEW_SESSION": "1"
-  },
-  "breadcrumbs.enabled": false,
-  "githubPullRequests.pullBranch": "never",
-  "github.copilot.editor.enableAutoCompletions": true,
-  "jupyter.widgetScriptSources": ["jsdelivr.com", "unpkg.com"],
-  "makefile.configureOnOpen": false,
-  "security.promptForLocalFileProtocolHandling": false,
-  "terminal.external.osxExec": "Warp.app",
-  "vue.server.hybridMode": true
+    //"editor.fontFamily": "'JetBrains Mono Nerd Font",
+    "editor.fontLigatures": false,
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    "sql-formatter.uppercase": true,
+    "workbench.editor.labelFormat": "medium",
+    "explorer.confirmDelete": false,
+    "terminal.integrated.inheritEnv": false,
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.ipynb_checkpoints": true,
+        "**/*.pyc": true
+    },
+    "[python]": {
+        "editor.hover.enabled": true,
+        // "editor.defaultFormatter": null,
+        // "editor.formatOnSave": true,
+        // "editor.codeActionsOnSave": {
+        //   "source.fixAll": "explicit"
+        // }
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        }
+    },
+    "typescript.suggest.paths": false,
+    "editor.folding": false, // removes the folding feature
+    "editor.scrollbar.horizontal": "hidden",
+    "editor.scrollbar.vertical": "hidden",
+    "editor.lineNumbers": "on",
+    "editor.rulers": [
+        100
+    ],
+    "editor.autoClosingQuotes": "never",
+    "editor.wordWrap": "on",
+    "editor.occurrencesHighlight": "off",
+    "editor.hideCursorInOverviewRuler": true,
+    "editor.overviewRulerBorder": false,
+    "editor.glyphMargin": true,
+    "editor.renderLineHighlight": "none", // side-menu
+    "workbench.editor.tabCloseButton": "off",
+    "workbench.editor.showIcons": false,
+    "explorer.openEditors.visible": 1,
+    "explorer.confirmDragAndDrop": false,
+    "editor.renderWhitespace": "none",
+    "editor.renderControlCharacters": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "[sql]": {
+        "editor.tabSize": 4,
+        // Insert spaces when pressing Tab.
+        "editor.insertSpaces": true,
+        // When opening a file, `editor.tabSize` and `editor.insertSpaces` will be detected based on the file contents.
+        "editor.detectIndentation": true
+    },
+    "editor.detectIndentation": false,
+    "[javascript]": {
+        "editor.tabSize": 2,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "python.languageServer": "Pylance",
+    "editor.formatOnSave": false,
+    "go.formatTool": "goimports",
+    "workbench.editorAssociations": {
+        "*.ipynb": "jupyter-notebook"
+    },
+    "jupyter.alwaysTrustNotebooks": true,
+    "window.title": "${rootName}",
+    "editor.multiCursorModifier": "alt",
+    "diffEditor.renderSideBySide": false,
+    "python.testing.autoTestDiscoverOnSaveEnabled": true,
+    "editor.cursorBlinking": "solid",
+    "go.toolsManagement.autoUpdate": true,
+    "git.decorations.enabled": false,
+    "window.autoDetectColorScheme": true,
+    "workbench.preferredDarkColorTheme": "Rosé Pine Moon",
+    "workbench.preferredLightColorTheme": "Rosé Pine Dawn",
+    "editor.fontSize": 13,
+    "github.copilot.enable": {
+        "*": true,
+        "plaintext": true,
+        "markdown": true,
+        "yaml": true
+    },
+    "[json]": {
+        "editor.quickSuggestions": {
+            "strings": true
+        },
+        "editor.suggest.insertMode": "replace"
+    },
+    "workbench.colorTheme": "Rosé Pine Dawn",
+    "git.autofetch": true,
+    "notebook.cellToolbarLocation": {
+        "default": "right",
+        "jupyter-notebook": "left"
+    },
+    "jupyter.askForKernelRestart": false,
+    "editor.minimap.enabled": false,
+    "files.associations": {
+        "*.sql": "jinja-sql",
+        "**/target/**": ""
+    },
+    "workbench.preferredHighContrastColorTheme": "Rosé Pine",
+    "editor.smoothScrolling": true,
+    "workbench.list.smoothScrolling": true,
+    "workbench.list.mouseWheelScrollSensitivity": 0.7,
+    "security.workspace.trust.untrustedFiles": "open",
+    "workbench.preferredHighContrastLightColorTheme": "Rosé Pine Dawn",
+    "workbench.iconTheme": "catppuccin-latte",
+    "editor.inlineSuggest.enabled": true,
+    "workbench.layoutControl.enabled": false,
+    "notebook.output.textLineLimit": 100,
+    "jupyter.interactiveWindow.textEditor.executeSelection": false,
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+        "editor.formatOnSave": true // Optional
+    },
+    "git.openRepositoryInParentFolders": "never",
+    "window.commandCenter": false,
+    "workbench.editor.tabActionCloseVisibility": false,
+    "terminal.integrated.env.osx": {
+        "CW_NEW_SESSION": "1",
+        "FIG_NEW_SESSION": "1"
+    },
+    "breadcrumbs.enabled": false,
+    "githubPullRequests.pullBranch": "never",
+    "jupyter.widgetScriptSources": [
+        "jsdelivr.com",
+        "unpkg.com"
+    ],
+    "makefile.configureOnOpen": false,
+    "security.promptForLocalFileProtocolHandling": false,
+    "terminal.external.osxExec": "Warp.app",
+    "vue.server.hybridMode": true,
+    "workbench.activityBar.location": "hidden",
+    "git.confirmSync": false,
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "workbench.editor.editorActionsLocation": "hidden",
+    "git.enableSmartCommit": true,
+    "github.copilot.selectedCompletionModel": "",
+    "githubPullRequests.pushBranch": "always",
+    "svelte.enable-ts-plugin": true,
+    "terraform.experimentalFeatures.validateOnSave": true,
+    "python.analysis.typeCheckingMode": "basic"
 }

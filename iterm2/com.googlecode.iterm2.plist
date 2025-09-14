@@ -361,6 +361,22 @@
 	</dict>
 	<key>Default Bookmark Guid</key>
 	<string>B1D90E67-268A-4456-BF2C-75ED822698B8</string>
+	<key>GlobalKeyMap</key>
+	<dict>
+		<key>0xd-0x20000-0x24</key>
+		<dict>
+			<key>Action</key>
+			<integer>12</integer>
+			<key>Keycode</key>
+			<integer>13</integer>
+			<key>Modifiers</key>
+			<integer>131072</integer>
+			<key>Text</key>
+			<string>\n</string>
+			<key>Version</key>
+			<integer>1</integer>
+		</dict>
+	</dict>
 	<key>HTMLTabTitles</key>
 	<true/>
 	<key>HapticFeedbackForEsc</key>
@@ -1179,6 +1195,8 @@
 			<string>FiraMonoForPowerline-Bold 15</string>
 			<key>Option Key Sends</key>
 			<integer>0</integer>
+			<key>Place Prompt at First Column</key>
+			<true/>
 			<key>Prompt Before Closing 2</key>
 			<false/>
 			<key>Right Option Key Sends</key>
@@ -1219,6 +1237,8 @@
 			<false/>
 			<key>Shortcut</key>
 			<string></string>
+			<key>Show Mark Indicators</key>
+			<false/>
 			<key>Silence Bell</key>
 			<false/>
 			<key>Space</key>
@@ -1307,8 +1327,12 @@
 	<false/>
 	<key>SplitPaneDimmingAmount</key>
 	<real>0.39737769265776696</real>
+	<key>StatusBarPosition</key>
+	<integer>0</integer>
 	<key>TabStyleWithAutomaticOption</key>
 	<integer>5</integer>
+	<key>TabViewType</key>
+	<integer>0</integer>
 	<key>TabsHaveCloseButton</key>
 	<true/>
 	<key>TerminalMargin</key>
