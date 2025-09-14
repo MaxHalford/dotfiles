@@ -152,5 +152,4 @@ export PYENV_VIRTUALENV_DISABLE_PROMPT=1
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
-
 source ~/.safe-chain/scripts/init-posix.sh # Safe-chain Zsh initialization script
