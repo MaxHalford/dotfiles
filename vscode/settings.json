@@ -155,5 +155,6 @@
     "githubPullRequests.pushBranch": "always",
     "svelte.enable-ts-plugin": true,
     "terraform.experimentalFeatures.validateOnSave": true,
-    "python.analysis.typeCheckingMode": "basic"
+    "python.analysis.typeCheckingMode": "basic",
+    "workbench.secondarySideBar.defaultVisibility": "hidden"
 }
