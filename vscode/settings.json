@@ -11,6 +11,8 @@
         "settings-body": "Jetbrains Mono",
         "extension-editor": "Jetbrains Mono"
     },
+    "editor.bracketPairColorization.enabled": true,
+    "editor.cursorSurroundingLines": 15,
     //"editor.fontFamily": "'JetBrains Mono Nerd Font",
     "editor.fontLigatures": false,
     "files.insertFinalNewline": true,
@@ -22,15 +24,12 @@
     "files.exclude": {
         "**/__pycache__": true,
         "**/.ipynb_checkpoints": true,
+        "**/.pytest_cache": true,
+        "**/.venv": true,
         "**/*.pyc": true
     },
     "[python]": {
-        "editor.hover.enabled": true,
-        // "editor.defaultFormatter": null,
-        // "editor.formatOnSave": true,
-        // "editor.codeActionsOnSave": {
-        //   "source.fixAll": "explicit"
-        // }
+        "editor.hover.enabled": "on",
         "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
@@ -38,6 +37,7 @@
             "source.organizeImports": "explicit"
         }
     },
+    "ruff.nativeServer": true,
     "typescript.suggest.paths": false,
     "editor.folding": false, // removes the folding feature
     "editor.scrollbar.horizontal": "hidden",
@@ -72,7 +72,11 @@
         "editor.tabSize": 2,
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
+    "[vue]": {
+        "editor.tabSize": 2,
+    },
     "python.languageServer": "Pylance",
+    "python.analysis.autoImportCompletions": true,
     "editor.formatOnSave": false,
     "go.formatTool": "goimports",
     "workbench.editorAssociations": {
@@ -92,9 +96,9 @@
     "editor.fontSize": 13,
     "github.copilot.enable": {
         "*": true,
-        "plaintext": true,
-        "markdown": true,
-        "yaml": true
+        "plaintext": false,
+        "markdown": false,
+        "yaml": false
     },
     "[json]": {
         "editor.quickSuggestions": {
@@ -137,7 +141,7 @@
         "FIG_NEW_SESSION": "1"
     },
     "breadcrumbs.enabled": false,
-    "githubPullRequests.pullBranch": "never",
+    "githubPullRequests.pullBranch": "always",
     "jupyter.widgetScriptSources": [
         "jsdelivr.com",
         "unpkg.com"
@@ -156,5 +160,24 @@
     "svelte.enable-ts-plugin": true,
     "terraform.experimentalFeatures.validateOnSave": true,
     "python.analysis.typeCheckingMode": "basic",
-    "workbench.secondarySideBar.defaultVisibility": "hidden"
+    "workbench.secondarySideBar.defaultVisibility": "hidden",
+    "sqltools.useNodeRuntime": true,
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.inlayHints.pytestParameters": true,
+    "python.analysis.inlayHints.variableTypes": true,
+    "editor.inlayHints.enabled": "off",
+    "editor.accessibilitySupport": "off",
+    "dataWrangler.outputRenderer.pagination.defaultSize": 25,
+    "editor.cursorSmoothCaretAnimation": "on",
+    "chat.viewSessions.orientation": "stacked",
+    "json.schemaDownload.trustedDomains": {
+        "https://schemastore.azurewebsites.net/": true,
+        "https://raw.githubusercontent.com/": true,
+        "https://www.schemastore.org/": true,
+        "https://json.schemastore.org/": true,
+        "https://json-schema.org/": true,
+        "https://biomejs.dev": true
+    },
+    "git.blame.statusBarItem.enabled": false,
+    "workbench.statusBar.visible": false,
 }
