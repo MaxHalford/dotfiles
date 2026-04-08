@@ -80,7 +80,6 @@ zinit ice lucid wait'0'
 zinit light joshskidmore/zsh-fzf-history-search
 
 # safe-chain
-source ~/.safe-chain/scripts/init-posix.sh
 
 # peon-ping
 alias peon="bash ~/.claude/hooks/peon-ping/peon.sh"
@@ -88,3 +87,6 @@ alias peon="bash ~/.claude/hooks/peon-ping/peon.sh"
 
 # p10k config
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+alias claude='claude --enable-auto-mode'
+source ~/.safe-chain/scripts/init-posix.sh # Safe-chain Zsh initialization script

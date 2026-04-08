@@ -27,6 +27,7 @@ SYMLINKS = [
     (".ipython/profile_default/startup", "/Users/max/.ipython/profile_default"),
     (".zshrc", "~/"),
     (".p10k.zsh", "~/"),
+    ("claude/settings.json", "~/.claude"),
 ]
 
 
