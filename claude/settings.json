@@ -79,6 +79,11 @@
     }
   },
   "skipDangerousModePermissionPrompt": true,
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline-command.sh",
+    "refreshInterval": 10
+  },
   "allowedTools": [
     "Task",
     "Bash(git log:*)",

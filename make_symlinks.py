@@ -28,6 +28,7 @@ SYMLINKS = [
     (".zshrc", "~/"),
     (".p10k.zsh", "~/"),
     ("claude/settings.json", "~/.claude"),
+    ("claude/statusline-command.sh", "~/.claude"),
 ]
 
 
