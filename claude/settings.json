@@ -43,8 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/max/.claude/hooks/peon-ping/peon.sh",
-            "timeout": 10
+            "command": "osascript -e 'display notification \"Claude Code needs your attention\" with title \"Claude Code\"'"
           }
         ]
       }
@@ -55,8 +54,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/max/.claude/hooks/peon-ping/peon.sh",
-            "timeout": 10
+            "command": "osascript -e 'display notification \"Claude Code needs your attention\" with title \"Claude Code\"'"
           }
         ]
       }
