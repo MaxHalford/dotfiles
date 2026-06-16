@@ -81,12 +81,32 @@ zinit light joshskidmore/zsh-fzf-history-search
 
 # safe-chain
 
-# peon-ping
-alias peon="bash ~/.claude/hooks/peon-ping/peon.sh"
-[ -f ~/.claude/hooks/peon-ping/completions.bash ] && source ~/.claude/hooks/peon-ping/completions.bash
 
 # p10k config
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 alias claude='claude --enable-auto-mode'
-source ~/.safe-chain/scripts/init-posix.sh # Safe-chain Zsh initialization script
+
+# peon-ping quick controls
+alias peon="bash /Users/max/.claude/hooks/peon-ping/peon.sh"
+[ -f /Users/max/.claude/hooks/peon-ping/completions.bash ] && source /Users/max/.claude/hooks/peon-ping/completions.bash
+source /Users/max/.safe-chain/scripts/init-posix.sh # Safe-chain Zsh initialization script
+# aikido-endpoint-cert-config-start
+# Allow Node.js tooling to trust the SafeChain MITM CA while preserving public roots.
+export NODE_EXTRA_CA_CERTS="/Library/Application Support/AikidoSecurity/EndpointProtection/run/endpoint-protection-combined-ca.pem"
+# aikido-endpoint-cert-config-end
+# aikido-endpoint-pip-cert-config-start
+# Allow Python package managers to trust the SafeChain MITM CA while preserving user-provided roots.
+export PIP_CERT="/Library/Application Support/AikidoSecurity/EndpointProtection/run/endpoint-protection-pip-combined-ca.pem"
+export REQUESTS_CA_BUNDLE="/Library/Application Support/AikidoSecurity/EndpointProtection/run/endpoint-protection-pip-combined-ca.pem"
+export POETRY_CERTIFICATES_PYPI_CERT="/Library/Application Support/AikidoSecurity/EndpointProtection/run/endpoint-protection-pip-combined-ca.pem"
+export UV_SYSTEM_CERTS=true
+# aikido-endpoint-pip-cert-config-end
+# aikido-endpoint-ruby-cert-config-start
+# Allow Ruby Bundler to trust the SafeChain MITM CA while preserving public roots.
+export BUNDLE_SSL_CA_CERT="/Library/Application Support/AikidoSecurity/EndpointProtection/run/endpoint-protection-ruby-combined-ca.pem"
+# aikido-endpoint-ruby-cert-config-end
+# aikido-endpoint-curl-cert-config-start
+# Allow curl and other OpenSSL-linked tools to trust the SafeChain MITM CA while preserving the system roots.
+export CURL_CA_BUNDLE="/Library/Application Support/AikidoSecurity/EndpointProtection/run/endpoint-protection-openssl-combined-ca.pem"
+# aikido-endpoint-curl-cert-config-end

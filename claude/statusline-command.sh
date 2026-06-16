@@ -10,10 +10,11 @@ CONFIG_FILE="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/statusline-config.json"
 SETTINGS_FILE="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
 CACHE_DIR="/tmp/claude-statusline"
 CACHE_TTL=300
+CARBON_FACTORS_FILE="$HOME/code/claude-carbon/data/factors.json"
 
 # ── Default config (overridden by config file) ────────────────────────────────
 USE_NERDFONTS=true
-SEGMENTS="agent,worktree,model,context,git,directory,duration,lines,tokens,effort,style,rate_5h,rate_7d"
+SEGMENTS="agent,worktree,model,context,git,directory,duration,lines,tokens,co2,effort,style,rate_5h,rate_7d"
 CONTEXT_STYLE="bar"    # "bar" | "percent" | "tokens"
 RATE_STYLE="bar"       # "bar" | "percent"
 
@@ -30,6 +31,7 @@ NF_ICON_VERSION="󰅩"
 NF_ICON_STYLE="󰏘"
 NF_ICON_TOKENS="󰚞"
 NF_ICON_RATE="󰔟"
+NF_ICON_CO2=""
 NF_ICON_DIRTY="*"
 NF_ICON_BAR_FULL="█"
 NF_ICON_BAR_EMPTY="░"
@@ -47,6 +49,7 @@ TXT_ICON_VERSION="v"
 TXT_ICON_STYLE="Style:"
 TXT_ICON_TOKENS="Tokens:"
 TXT_ICON_RATE=""
+TXT_ICON_CO2="CO2:"
 TXT_ICON_DIRTY="*"
 TXT_ICON_BAR_FULL="#"
 TXT_ICON_BAR_EMPTY="."
@@ -104,6 +107,7 @@ setup_icons() {
         ICON_STYLE="$NF_ICON_STYLE"
         ICON_TOKENS="$NF_ICON_TOKENS"
         ICON_RATE="$NF_ICON_RATE"
+        ICON_CO2="$NF_ICON_CO2"
         ICON_DIRTY="$NF_ICON_DIRTY"
         ICON_BAR_FULL="$NF_ICON_BAR_FULL"
         ICON_BAR_EMPTY="$NF_ICON_BAR_EMPTY"
@@ -120,6 +124,7 @@ setup_icons() {
         ICON_STYLE="$TXT_ICON_STYLE"
         ICON_TOKENS="$TXT_ICON_TOKENS"
         ICON_RATE="$TXT_ICON_RATE"
+        ICON_CO2="$TXT_ICON_CO2"
         ICON_DIRTY="$TXT_ICON_DIRTY"
         ICON_BAR_FULL="$TXT_ICON_BAR_FULL"
         ICON_BAR_EMPTY="$TXT_ICON_BAR_EMPTY"
@@ -561,6 +566,25 @@ main() {
 
     if has_segment "tokens" && (( TOTAL_INPUT > 0 )); then
         _append "${white}$(icon "$ICON_TOKENS")${green}$(fmt_tokens $TOTAL_INPUT) ↑${reset}  ${br_yellow}$(fmt_tokens $TOTAL_OUTPUT) ↓${reset}"
+    fi
+
+    if has_segment "co2" && (( TOTAL_INPUT > 0 || TOTAL_OUTPUT > 0 )) && [[ -f "$CARBON_FACTORS_FILE" ]]; then
+        local model_family="sonnet"
+        case "$MODEL_ID" in
+            *opus*)  model_family="opus";;
+            *haiku*) model_family="haiku";;
+        esac
+        local factor_in factor_out co2_g co2_display
+        factor_in=$(jq -r ".models.${model_family}.input // 0" "$CARBON_FACTORS_FILE" 2>/dev/null || echo 0)
+        factor_out=$(jq -r ".models.${model_family}.output // 0" "$CARBON_FACTORS_FILE" 2>/dev/null || echo 0)
+        co2_g=$(awk -v ti="$TOTAL_INPUT" -v fi="$factor_in" -v to="$TOTAL_OUTPUT" -v fo="$factor_out" \
+            'BEGIN { printf "%.0f", (ti * fi + to * fo) / 1000000 }')
+        if (( co2_g >= 1000 )); then
+            co2_display=$(awk -v g="$co2_g" 'BEGIN { printf "%.1fkg", g/1000 }')
+        else
+            co2_display="${co2_g}g"
+        fi
+        _append "${white}$(icon "$ICON_CO2")${br_green}${co2_display} CO₂${reset}"
     fi
 
     if has_segment "effort" && [[ -n "$EFFORT" && "$EFFORT" != "default" ]]; then

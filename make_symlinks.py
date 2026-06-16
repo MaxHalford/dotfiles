@@ -29,9 +29,23 @@ SYMLINKS = [
     (".p10k.zsh", "~/"),
     ("claude/settings.json", "~/.claude"),
     ("claude/statusline-command.sh", "~/.claude"),
+    ("iterm2/com.max.iterm-clear-tab-color.plist", "~/Library/LaunchAgents"),
 ]
+
+LAUNCH_AGENTS = [
+    "iterm2/com.max.iterm-clear-tab-color.plist",
+]
+
+
+def reload_launch_agent(plist_rel: str):
+    plist = (HERE / plist_rel).resolve()
+    os.system(f"launchctl unload {shlex.quote(str(plist))} 2>/dev/null")
+    os.system(f"launchctl load {shlex.quote(str(plist))}")
+    print(f"launchctl reloaded {plist.name}")
 
 
 if __name__ == "__main__":
     for src, dst_dir in SYMLINKS:
         symlink(src, dst_dir)
+    for plist in LAUNCH_AGENTS:
+        reload_launch_agent(plist)
