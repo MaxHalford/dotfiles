@@ -11,7 +11,6 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=5'
 ZSH_THEME="powerlevel10k/powerlevel10k"
 DISABLE_UNTRACKED_FILES_DIRTY="true"
 plugins=(
-    autoswitch_virtualenv
     git
     z
     zsh-autosuggestions
@@ -79,18 +78,17 @@ autoload -Uz _zinit
 zinit ice lucid wait'0'
 zinit light joshskidmore/zsh-fzf-history-search
 
-# safe-chain
-
-
 # p10k config
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 alias claude='claude --enable-auto-mode'
 
 # peon-ping quick controls
-alias peon="bash /Users/max/.claude/hooks/peon-ping/peon.sh"
-[ -f /Users/max/.claude/hooks/peon-ping/completions.bash ] && source /Users/max/.claude/hooks/peon-ping/completions.bash
-source /Users/max/.safe-chain/scripts/init-posix.sh # Safe-chain Zsh initialization script
+alias peon="bash $HOME/.claude/hooks/peon-ping/peon.sh"
+[ -f "$HOME/.claude/hooks/peon-ping/completions.bash" ] && source "$HOME/.claude/hooks/peon-ping/completions.bash"
+
+# Host-specific overrides (machine-injected installers, work-only env, etc.)
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local
 # aikido-endpoint-cert-config-start
 # Allow Node.js tooling to trust the SafeChain MITM CA while preserving public roots.
 export NODE_EXTRA_CA_CERTS="/Library/Application Support/AikidoSecurity/EndpointProtection/run/endpoint-protection-combined-ca.pem"

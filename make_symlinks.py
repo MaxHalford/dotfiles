@@ -1,30 +1,30 @@
-import argparse
 import os
 from pathlib import Path
 import shlex
-import subprocess
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--dry", dest="dry", action="store_true")
-parser.set_defaults(dry=False)
-args = parser.parse_args()
 
 
 HERE = Path(__file__).parent
 
 
 def symlink(src: str, dst_dir: str):
-    src = Path(src)
-    os.system(f"ln -sf {HERE / src} {Path(dst_dir) / src.name}")
-    print(f"{src} -> {dst_dir}")
+    src_path = Path(src)
+    dst = Path(dst_dir).expanduser() / src_path.name
+    src_abs = (HERE / src_path).resolve()
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if dst.is_symlink() or (dst.exists() and not dst.is_dir()):
+        dst.unlink()
+    elif dst.is_dir():
+        print(f"SKIP {dst} (existing non-symlink directory — remove manually to relink)")
+        return
+    dst.symlink_to(src_abs)
+    print(f"{src} -> {dst}")
 
 
 SYMLINKS = [
-    ("vscode/settings.json", "~/Library/Application\\ Support/Code/User"),
-    ("vscode/keybinding.json", "~/Library/Application\\ Support/Code/User"),
-    ("vscode/snippets", "~/Library/Application\\ Support/Code/User"),
-    (".ipython/profile_default/startup", "/Users/max/.ipython/profile_default"),
+    ("vscode/settings.json", "~/Library/Application Support/Code/User"),
+    ("vscode/keybindings.json", "~/Library/Application Support/Code/User"),
+    ("vscode/snippets", "~/Library/Application Support/Code/User"),
+    (".ipython/profile_default/startup", "~/.ipython/profile_default"),
     (".zshrc", "~/"),
     (".p10k.zsh", "~/"),
     ("claude/settings.json", "~/.claude"),

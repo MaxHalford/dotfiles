@@ -3,8 +3,6 @@
 ## Cloning
 
 ```sh
-git config --global user.name MaxHalford
-git config --global user.email maxhalford25@gmail.com
 git clone https://github.com/MaxHalford/dotfiles
 cd dotfiles
 ```
@@ -18,6 +16,10 @@ export POETRY_HTTP_BASIC_PYPI_USERNAME=<keep_it_secret>
 export POETRY_HTTP_BASIC_PYPI_PASSWORD=<keep_it_safe>
 ```
 
+## Host-specific config
+
+`.zshrc` sources `~/.zshrc.local` at the end if it exists. Put machine-specific env vars, installer-injected blocks (Aikido, safe-chain, etc.), and work-only PATH entries there — not in the tracked `.zshrc`.
+
 ## MacOS specific
 
 ```sh
@@ -28,11 +30,6 @@ curl https://raw.githubusercontent.com/github/gitignore/master/Global/macOS.giti
 
 For iterm2, go to `General > Preferences`, click on `Load preferences from a custom folder or URL`, and select the `iterm2` folder. Also set `Save changes` to `Automatically` so that changes are synced.
 
-## Linux specific
-
-```sh
-```
-
 ## General
 
 ```sh
@@ -40,15 +37,13 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/mas
 python make_symlinks.py
 ```
 
-For VSCode, you have to install extensions manually, as so:
+For VSCode extensions:
 
 ```sh
-while read extension; do
-  code --install-extension $extension
-done < vscode/extensions.txt
+./vscode/install-extensions.sh
 ```
 
-You'll have to update the list of extensions if you install a new one, like this:
+Refresh the list whenever you install a new extension:
 
 ```sh
 code --list-extensions > vscode/extensions.txt
