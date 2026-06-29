@@ -205,5 +205,6 @@
     "Write",
     "WebFetch",
     "WebSearch"
-  ]
+  ],
+  "tui": "fullscreen"
 }
