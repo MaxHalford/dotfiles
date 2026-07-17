@@ -1,0 +1,11 @@
+[
+  {
+    "context": "Workspace",
+    "bindings": {
+      "cmd-m": "workspace::ToggleCenteredLayout",
+      "shift-left": "pane::GoBack",
+      "shift-right": "pane::GoForward",
+      "cmd-]": "editor::ToggleBreakpoint"
+    }
+  }
+]

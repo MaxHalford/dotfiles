@@ -24,7 +24,7 @@ export POETRY_HTTP_BASIC_PYPI_PASSWORD=<keep_it_safe>
 
 ```sh
 brew install docker docker-compose zsh
-brew install --cask anaconda iterm2 visual-studio-code
+brew install --cask anaconda iterm2 visual-studio-code zed
 curl https://raw.githubusercontent.com/github/gitignore/master/Global/macOS.gitignore -o ~/.gitignore
 ```
 
@@ -48,3 +48,17 @@ Refresh the list whenever you install a new extension:
 ```sh
 code --list-extensions > vscode/extensions.txt
 ```
+
+## Zed
+
+`make_symlinks.py` links `zed/settings.json` and `zed/keymap.json` into
+`~/Library/Application Support/Zed`. The Zed configuration carries over the
+portable VS Code preferences: a system-aware theme, Rec Mono editor font, save
+behavior, editor layout, wrapping, and Python/Rust language-specific
+format-on-save settings.
+
+The bundled Zed themes are used as a valid fallback. Install a Rosé Pine Zed
+theme extension and select `Rosé Pine Dawn` / `Rosé Pine Moon` in Zed to restore
+the VS Code color scheme. Zed extensions provide language servers, formatters,
+notebooks, themes, and AI features separately, so VS Code extension-specific
+preferences are intentionally not included.

@@ -1,0 +1,46 @@
+{
+  "base_keymap": "VSCode",
+  "theme": {
+    "mode": "system",
+    "light": "One Light",
+    "dark": "One Dark"
+  },
+  "ui_font_family": ".SystemUIFont",
+  "buffer_font_family": "RecMonoLinear Nerd Font",
+  "buffer_font_size": 13,
+  "ensure_final_newline_on_save": true,
+  "remove_trailing_whitespace_on_save": true,
+  "format_on_save": "off",
+  "use_autoclose": false,
+  "soft_wrap": "editor_width",
+  "preferred_line_length": 100,
+  "show_completions_on_input": true,
+  "show_edit_predictions": true,
+  "inlay_hints": {
+    "enabled": false
+  },
+  "minimap": {
+    "show": "never"
+  },
+  "scrollbar": {
+    "show": "never"
+  },
+  "gutter": {
+    "line_numbers": true,
+    "folds": false
+  },
+  "indent_guides": {
+    "enabled": false
+  },
+  "languages": {
+    "Python": {
+      "format_on_save": "on"
+    },
+    "JavaScript": {
+      "tab_size": 2
+    },
+    "Rust": {
+      "format_on_save": "on"
+    }
+  }
+}
