@@ -1,0 +1,18 @@
+# Hold Command while hovering a URL or file path, then left-click to open it.
+# File-path detection is built into Ghostty; this keeps URL matching explicit.
+link-url = true
+
+# Match the word-deletion behavior used in iTerm2.
+# Escape + DEL is understood by Zsh as backward-kill-word.
+keybind = alt+backspace=text:\x1b\x7f
+
+# Open the fzf-powered Zsh history search with Option+R.
+keybind = alt+r=text:\x12
+
+# Follow macOS appearance and use diff-friendly Rosé Pine variants.
+theme = light:Rose Pine Dawn Clear Diffs,dark:Rose Pine Moon Clear Diffs
+window-theme = system
+
+window-padding-x = 8
+window-padding-y = 6
+adjust-cell-height = 10%

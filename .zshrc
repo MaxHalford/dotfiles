@@ -19,6 +19,10 @@ plugins=(
 )
 source $ZSH/oh-my-zsh.sh
 
+# Keep Tab as regular shell completion.
+bindkey -M emacs '^I' expand-or-complete
+bindkey -M viins '^I' expand-or-complete
+
 # Fix slow paste with zsh-syntax-highlighting
 pasteinit() {
   OLD_SELF_INSERT=${${(s.:.)widgets[self-insert]}[2,3]}

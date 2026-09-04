@@ -22,10 +22,21 @@ export POETRY_HTTP_BASIC_PYPI_PASSWORD=<keep_it_safe>
 
 ## MacOS specific
 
+Install the packages and applications declared in `Brewfile`:
+
 ```sh
-brew install docker docker-compose zsh
-brew install --cask anaconda iterm2 visual-studio-code zed
+brew bundle
 curl https://raw.githubusercontent.com/github/gitignore/master/Global/macOS.gitignore -o ~/.gitignore
+```
+
+When adding or removing software, update the committed `Brewfile`:
+
+```sh
+brew bundle add <formula>
+brew bundle add --cask <application>
+brew bundle remove <formula>
+brew bundle remove --cask <application>
+brew bundle check
 ```
 
 For iterm2, go to `General > Preferences`, click on `Load preferences from a custom folder or URL`, and select the `iterm2` folder. Also set `Save changes` to `Automatically` so that changes are synced.
@@ -36,6 +47,10 @@ For iterm2, go to `General > Preferences`, click on `Load preferences from a cus
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 python make_symlinks.py
 ```
+
+The symlink script also installs the Ghostty configuration. It maps
+Option+Delete to backward word deletion and Option+R to fzf history search;
+Zsh maps Tab to normal completion.
 
 For VSCode extensions:
 

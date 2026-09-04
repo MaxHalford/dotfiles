@@ -96,6 +96,8 @@
     "editor.fontSize": 13,
     "github.copilot.enable": {
         "*": true,
+        "typst": false,
+        "ioynb": false,
         "plaintext": false,
         "markdown": false,
         "yaml": false
@@ -124,7 +126,6 @@
     "workbench.list.mouseWheelScrollSensitivity": 0.7,
     "security.workspace.trust.untrustedFiles": "open",
     "workbench.preferredHighContrastLightColorTheme": "Rosé Pine Dawn",
-    "workbench.iconTheme": "catppuccin-latte",
     "editor.inlineSuggest.enabled": true,
     "workbench.layoutControl.enabled": false,
     "notebook.output.textLineLimit": 100,
@@ -150,7 +151,6 @@
     "security.promptForLocalFileProtocolHandling": false,
     "terminal.external.osxExec": "Warp.app",
     "vue.server.hybridMode": true,
-    "workbench.activityBar.location": "hidden",
     "git.confirmSync": false,
     "github.copilot.nextEditSuggestions.enabled": true,
     "workbench.editor.editorActionsLocation": "hidden",
@@ -179,5 +179,7 @@
         "https://biomejs.dev": true
     },
     "git.blame.statusBarItem.enabled": false,
-    "workbench.statusBar.visible": false,
+    "workbench.activityBar.location": "hidden",
+    "workbench.startupEditor": "none",
+    "workbench.iconTheme": "file-icons-colourless",
 }

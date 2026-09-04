@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# `post-checkout` also runs for ordinary branch switches. Only link the
+# environment file when Git has created a linked worktree.
+worktree_git_dir="$(git rev-parse --path-format=absolute --git-dir 2>/dev/null)" || exit 0
+common_git_dir="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || exit 0
+
+[ "$worktree_git_dir" != "$common_git_dir" ] || exit 0
+
+primary_worktree="${common_git_dir%/.git}"
+shared_env="$primary_worktree/.env"
+local_env="$(git rev-parse --show-toplevel)/.env"
+
+# Never overwrite a worktree-specific file or symlink, and leave repositories
+# without a shared environment file untouched.
+[ ! -e "$local_env" ] || exit 0
+[ -f "$shared_env" ] || exit 0
+
+ln -s "$shared_env" "$local_env"
+printf 'Linked .env from primary worktree\n'
