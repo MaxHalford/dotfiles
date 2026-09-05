@@ -50,7 +50,13 @@ python make_symlinks.py
 
 The symlink script also installs the Ghostty configuration. It maps
 Option+Delete to backward word deletion and Option+R to fzf history search;
-Zsh maps Tab to normal completion.
+Zsh maps Tab to normal completion. Ghostty follows the macOS appearance with
+Rosé Pine Dawn and a Moon variant whose ANSI green is light enough for shell
+syntax highlighting. Powerlevel10k uses the themes' high-contrast ANSI
+surface/text pair instead of the incompatible rainbow palette defaults.
+
+The Herdr configuration uses the same accessible green and replaces its pale
+blue active tabs with a high-contrast Rosé Pine gray treatment.
 
 For VSCode extensions:
 

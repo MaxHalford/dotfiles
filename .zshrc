@@ -14,10 +14,36 @@ plugins=(
     git
     z
     zsh-autosuggestions
-    zsh-syntax-highlighting
     bgnotify
+    zsh-syntax-highlighting
 )
 source $ZSH/oh-my-zsh.sh
+
+# zsh-syntax-highlighting uses generic ANSI names by default. Give dark mode an explicit
+# Rosé Pine Moon palette, with a lighter green for command-position tokens and aliases.
+if [[ $OSTYPE == darwin* && $(command defaults read -g AppleInterfaceStyle 2>/dev/null) == Dark ]]; then
+  ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#eb6f92,bold'
+  ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#f6c177'
+  ZSH_HIGHLIGHT_STYLES[suffix-alias]='fg=#a6da95,underline'
+  ZSH_HIGHLIGHT_STYLES[global-alias]='fg=#ea9a97'
+  ZSH_HIGHLIGHT_STYLES[precommand]='fg=#a6da95,underline'
+  ZSH_HIGHLIGHT_STYLES[autodirectory]='fg=#a6da95,underline'
+  ZSH_HIGHLIGHT_STYLES[globbing]='fg=#9ccfd8'
+  ZSH_HIGHLIGHT_STYLES[history-expansion]='fg=#9ccfd8'
+  ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]='fg=#c4a7e7'
+  ZSH_HIGHLIGHT_STYLES[process-substitution-delimiter]='fg=#c4a7e7'
+  ZSH_HIGHLIGHT_STYLES[back-quoted-argument-delimiter]='fg=#c4a7e7'
+  ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#f6c177'
+  ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#f6c177'
+  ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=#f6c177'
+  ZSH_HIGHLIGHT_STYLES[rc-quote]='fg=#ea9a97'
+  ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]='fg=#ea9a97'
+  ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]='fg=#ea9a97'
+  ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]='fg=#ea9a97'
+  ZSH_HIGHLIGHT_STYLES[redirection]='fg=#f6c177'
+  ZSH_HIGHLIGHT_STYLES[comment]='fg=#908caa'
+  ZSH_HIGHLIGHT_STYLES[arg0]='fg=#a6da95'
+fi
 
 # Keep Tab as regular shell completion.
 bindkey -M emacs '^I' expand-or-complete

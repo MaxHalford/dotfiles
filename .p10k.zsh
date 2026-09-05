@@ -384,11 +384,12 @@
     fi
 
     # Styling for different parts of Git status.
-    local       meta='%7F' # white foreground
-    local      clean='%0F' # black foreground
-    local   modified='%0F' # black foreground
-    local  untracked='%0F' # black foreground
-    local conflicted='%1F' # red foreground
+    # ANSI 7 is readable on ANSI 0 in both Rosé Pine Moon and Dawn.
+    local       meta='%7F'
+    local      clean='%7F'
+    local   modified='%7F'
+    local  untracked='%7F'
+    local conflicted='%7F'
 
     local res
 
@@ -1712,6 +1713,24 @@
   typeset -g POWERLEVEL9K_EXAMPLE_FOREGROUND=3
   typeset -g POWERLEVEL9K_EXAMPLE_BACKGROUND=1
   # typeset -g POWERLEVEL9K_EXAMPLE_VISUAL_IDENTIFIER_EXPANSION='⭐'
+
+  ###############################[ Rosé Pine colors ]#########################################
+  # Rosé Pine maps ANSI colors to pastels. The rainbow preset assumes conventional dark ANSI
+  # backgrounds, which can produce light-on-light text in Moon and dark-on-dark text in Dawn.
+  # ANSI 0 is Rosé Pine's contrasting surface and ANSI 7 is its primary text in both variants,
+  # so this pairing remains readable when Ghostty follows the macOS appearance automatically.
+  local p10k_color_parameter
+  for p10k_color_parameter in ${(k)parameters[(I)POWERLEVEL9K_*_BACKGROUND]}; do
+    [[ -n ${(P)p10k_color_parameter} ]] && typeset -g "$p10k_color_parameter=0"
+  done
+  for p10k_color_parameter in ${(k)parameters[(I)POWERLEVEL9K_*_FOREGROUND]}; do
+    typeset -g "$p10k_color_parameter=7"
+  done
+
+  # Keep semantic color where it is useful without sacrificing text contrast.
+  typeset -g POWERLEVEL9K_PROMPT_CHAR_OK_{VIINS,VICMD,VIVIS,VIOWR}_FOREGROUND=2
+  typeset -g POWERLEVEL9K_PROMPT_CHAR_ERROR_{VIINS,VICMD,VIVIS,VIOWR}_FOREGROUND=1
+  typeset -g POWERLEVEL9K_MULTILINE_FIRST_PROMPT_GAP_FOREGROUND=8
 
   # Transient prompt works similarly to the builtin transient_rprompt option. It trims down prompt
   # when accepting a command line. Supported values:

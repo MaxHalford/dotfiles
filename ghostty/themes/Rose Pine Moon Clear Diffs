@@ -1,14 +1,14 @@
-# Rosé Pine Moon with readable ANSI red/green diff backgrounds.
+# Rosé Pine Moon with a lighter ANSI green for readable foreground text.
 palette = 0=#393552
-palette = 1=#6e354b
-palette = 2=#315c4c
+palette = 1=#eb6f92
+palette = 2=#a6da95
 palette = 3=#f6c177
 palette = 4=#9ccfd8
 palette = 5=#c4a7e7
 palette = 6=#ea9a97
 palette = 7=#e0def4
 palette = 8=#6e6a86
-palette = 9=#e0def4
+palette = 9=#eb6f92
 palette = 10=#a6da95
 palette = 11=#f6c177
 palette = 12=#9ccfd8
