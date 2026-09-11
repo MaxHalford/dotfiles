@@ -1,6 +1,7 @@
 {
     //"editor.fontFamily": "Rec Mono Linear",
-    "editor.fontFamily": "Rec Mono Linear",
+    "editor.fontFamily": "'RecMonoLinear Nerd Font Mono', monospace",
+    "notebook.output.fontFamily": "'RecMonoLinear Nerd Font Mono', monospace",
     "apc.parts.font.family": {
         "sidebar": "Jetbrains Mono",
         "titlebar": "Jetbrains Mono",

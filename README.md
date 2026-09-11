@@ -58,6 +58,14 @@ surface/text pair instead of the incompatible rainbow palette defaults.
 The Herdr configuration uses the same accessible green and replaces its pale
 blue active tabs with a high-contrast Rosé Pine gray treatment.
 
+Install or update the tracked Herdr plugins and agent integrations:
+
+```sh
+./herdr/sync-plugins.sh
+```
+
+The Mermaid preview opens with `Ctrl+B`, then `m`.
+
 For VSCode extensions:
 
 ```sh

@@ -15,6 +15,15 @@ green = "#a6da95"
 default_shell = "/bin/zsh"
 shell_mode = "login"
 
+[experimental]
+kitty_graphics = true
+
 [ui]
 agent_panel_sort = "priority"
 show_agent_labels_on_pane_borders = false
+
+[[keys.command]]
+key = "prefix+m"
+type = "plugin_action"
+command = "dev.volpestyle.mermaid-preview.open"
+description = "open Mermaid preview"

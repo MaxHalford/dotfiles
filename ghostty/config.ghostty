@@ -15,4 +15,7 @@ window-theme = system
 
 window-padding-x = 8
 window-padding-y = 6
-adjust-cell-height = 10%
+adjust-cell-height = 15%
+
+font-family = "RecMonoLinear Nerd Font Mono"
+font-size = 13.5

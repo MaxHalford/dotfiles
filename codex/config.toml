@@ -1,0 +1,209 @@
+notify = ["/Users/max/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
+
+# Emit clickable file citations that open in Visual Studio Code. In Herdr,
+# hold Shift to bypass pane mouse capture and Cmd-click the resulting link.
+file_opener = "vscode"
+model = "gpt-5.6-sol"
+model_reasoning_effort = "high"
+
+[marketplaces.openai-bundled]
+last_updated = "2026-09-09T07:09:45Z"
+source_type = "local"
+source = "/Users/max/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.openai-primary-runtime]
+last_updated = "2026-09-09T07:10:46Z"
+source_type = "local"
+source = "/Users/max/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+[plugins."visualize@openai-bundled"]
+enabled = true
+
+[plugins."google-calendar@openai-curated"]
+enabled = true
+
+[plugins."slack@openai-curated"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."template-creator@openai-primary-runtime"]
+enabled = true
+
+[plugins."sites@openai-bundled"]
+enabled = true
+
+[plugins."chrome@openai-bundled"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[features]
+hooks = true
+js_repl = false
+in_app_local_automation = true
+
+[mcp_servers.node_repl]
+args = []
+command = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl"
+startup_timeout_sec = 120
+
+[mcp_servers.node_repl.env]
+NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS = "1000"
+NODE_REPL_NODE_MODULE_DIRS = "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
+NODE_REPL_NODE_PATH = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node"
+NODE_REPL_TRUSTED_CODE_PATHS = "/Users/max/.codex:/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
+CODEX_HOME = "/Users/max/.codex"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "8e86beb821b9afc846211798e0113bd4b9e79312dfcd135eb447bdb154f64071"
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
+NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
+NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
+NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = "Control desktop apps on macOS through Computer Use."
+BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
+BROWSER_USE_CODEX_APP_VERSION = "26.803.61601"
+CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
+
+[mcp_servers.computer-use]
+command = "./Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient"
+args = ["mcp"]
+cwd = "."
+enabled = false
+
+[mcp_servers.CodSpeed]
+url = "https://mcp.codspeed.io/mcp"
+
+[mcp_servers.railway]
+command = "railway"
+args = ["mcp"]
+
+[mcp_servers.railway.tools.environment_status]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.get_logs]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.list_domains]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.list_projects]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.list_services]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.list_variables]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.whoami]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.list_deployments]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.get_service_config]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.create_service]
+approval_mode = "approve"
+
+[mcp_servers.cloudflare]
+url = "https://mcp.cloudflare.com/mcp"
+
+[mcp_servers.cloudflare.tools.execute]
+approval_mode = "approve"
+
+[desktop]
+conversationDetailMode = "STEPS_COMMANDS"
+ambient-suggestions-enabled = false
+followUpQueueMode = "queue"
+
+[projects."/Users/max/projects"]
+trust_level = "trusted"
+
+[projects."/Users/max/Library/Application Support/com.conductor.app/bin"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/dotfiles"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/river"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/maxhalford.github.io"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/southworks"]
+trust_level = "trusted"
+
+[projects."/Users/max/Documents/Codex/2026-07-17/i"]
+trust_level = "trusted"
+
+[projects."/Users/max"]
+trust_level = "trusted"
+
+[projects."/Users/max/Documents/Codex/2026-07-17/i-2"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/prince"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/analytics-engineering-book"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/elsa-leo"]
+trust_level = "trusted"
+
+[projects."/Users/max/Documents/Codex/2026-08-09/chrome-plugin-chrome-openai-bundled-file"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/paperman"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/everbench"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/squill"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/sorobn"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/ill-be-back"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/tokenmoula"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/lab"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/turbopuffer/tpuf-benchmark"]
+trust_level = "trusted"
+
+[tui.model_availability_nux]
+"gpt-5.6-sol" = 4
+gpt-6-astra = 4
+
+[hooks.state]
+
+[hooks.state."/Users/max/.codex/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:59e85fcf0a3273d73647f33a8b441d55e30816666c0b100cfddc1282b08895c1"
+
+[apps.connector_76869538009648d5b282a4bb21c3d157.tools."github.create_pull_request"]
+approval_mode = "approve"
+
+[shell_environment_policy.set]
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "8e86beb821b9afc846211798e0113bd4b9e79312dfcd135eb447bdb154f64071"
+NODE_REPL_TRUSTED_CODE_PATHS = "/Users/max/.codex:/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"

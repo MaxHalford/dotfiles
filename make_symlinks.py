@@ -30,6 +30,7 @@ SYMLINKS = [
     ("ghostty/themes/Rose Pine Moon Clear Diffs", "~/.config/ghostty/themes"),
     ("herdr/config.toml", "~/.config/herdr"),
     (".ipython/profile_default/startup", "~/.ipython/profile_default"),
+    ("codex/config.toml", "~/.codex"),
     (".zshrc", "~/"),
     (".p10k.zsh", "~/"),
     ("claude/settings.json", "~/.claude"),
