@@ -479,7 +479,7 @@ class ShiprApp:
         return False
 
     def draw_row(self, row, item, branch_width, diff_width, width):
-        index = row - 2 + self.offset
+        index = row - 1 + self.offset
         selected = index == self.selected
         striped = index % 2 == 1 and self.stripe_colors and not selected
         row_style = (curses.A_REVERSE | curses.A_BOLD if selected else
@@ -519,18 +519,12 @@ class ShiprApp:
     def draw(self):
         window = self.window
         height, width = window.getmaxyx()
-        visible = max(1, height - 5)
+        visible = max(1, height - 4)
         self.selected = max(0, min(self.selected, len(self.items) - 1))
         self.offset = max(0, min(self.offset, self.selected))
         if self.selected >= self.offset + visible:
             self.offset = self.selected - visible + 1
         window.erase()
-        count = (f"{len(self.items)}/{self.total_count}" if self.total_count > len(self.items) else
-                 str(self.total_count or len(self.items)))
-        loading = "  loading more..." if self.loading_more else "  refreshing..." if self.refreshing else ""
-        more = "  ↓ more" if self.next_cursor and not self.loading_more else ""
-        draw_line(window, 0, f"shipr  •  {self.repo.name}  •  {count} open PRs  "
-                  f"({REFRESH_SECONDS}s refresh){more}{loading}", width, curses.A_BOLD)
         diff_width = max(MIN_DIFF_WIDTH,
                          max((len(diff_count(item.pr.get("additions"), "+")) + 3 +
                               len(diff_count(item.pr.get("deletions"), "-"))
@@ -540,8 +534,8 @@ class ShiprApp:
         header = (f"{'LAST COMMIT':<{AGE_WIDTH}} {'PR':<{PR_WIDTH}} "
                   f"{'BRANCH':<{branch_width}} {'STATUS':<{STATUS_WIDTH}} {'CI':<{CI_WIDTH}} "
                   f"{'DIFF':>{diff_width}} TITLE")
-        draw_line(window, 1, header, width, curses.A_UNDERLINE)
-        for row, item in enumerate(self.items[self.offset:self.offset + visible], start=2):
+        draw_line(window, 0, header, width, curses.A_UNDERLINE)
+        for row, item in enumerate(self.items[self.offset:self.offset + visible], start=1):
             self.draw_row(row, item, branch_width, diff_width, width)
         if self.active_action is None:
             draw_line(window, height - 3,
@@ -574,8 +568,8 @@ class ShiprApp:
         except curses.error:
             return None, False
         height, width = self.window.getmaxyx()
-        row_index = self.offset + y - 2
-        on_row = 2 <= y < 2 + max(1, height - 5) and 0 <= row_index < len(self.items)
+        row_index = self.offset + y - 1
+        on_row = 1 <= y < 1 + max(1, height - 4) and 0 <= row_index < len(self.items)
         if buttons & (curses.BUTTON3_PRESSED | curses.BUTTON3_CLICKED):
             if on_row:
                 self.created_pr_url = ""
@@ -753,13 +747,13 @@ class ShiprApp:
         elif key in (curses.KEY_NPAGE, curses.KEY_RIGHT):
             self.menu = None
             self.created_pr_url = ""
-            self.selected = min(self.selected + max(1, self.window.getmaxyx()[0] - 5),
+            self.selected = min(self.selected + max(1, self.window.getmaxyx()[0] - 4),
                                 max(0, len(self.items) - 1))
             self.maybe_load_more()
         elif key in (curses.KEY_PPAGE, curses.KEY_LEFT):
             self.menu = None
             self.created_pr_url = ""
-            self.selected = max(0, self.selected - max(1, self.window.getmaxyx()[0] - 5))
+            self.selected = max(0, self.selected - max(1, self.window.getmaxyx()[0] - 4))
         elif key == curses.KEY_END:
             self.menu = None
             self.created_pr_url = ""

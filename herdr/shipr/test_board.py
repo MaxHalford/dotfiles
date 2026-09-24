@@ -204,7 +204,7 @@ class ShiprTests(unittest.TestCase):
         app = board.ShiprApp(window, repo)
         app.items = [core.PullRequest(repo, {"number": number}) for number in range(20)]
         app.handle_key(board.curses.KEY_RIGHT)
-        self.assertEqual(app.selected, 5)
+        self.assertEqual(app.selected, 6)
         app.handle_key(board.curses.KEY_LEFT)
         self.assertEqual(app.selected, 0)
         app.selected = 14
@@ -238,23 +238,23 @@ class ShiprTests(unittest.TestCase):
         with mock.patch.object(board.curses, "color_pair", side_effect=lambda pair: pair << 8):
             app.draw()
         calls = [call.args for call in window.addnstr.call_args_list]
-        self.assertTrue(any(row == 1 and "LAST COMMIT" in value and "CI" in value and
+        self.assertTrue(any(row == 0 and "LAST COMMIT" in value and "CI" in value and
                             "DIFF" in value
                             for row, _, value, *_ in calls))
-        selected = [call for call in calls if call[0] == 2]
+        selected = [call for call in calls if call[0] == 1]
         self.assertEqual(len(selected), 1)
         self.assertEqual(selected[0][4], board.curses.A_REVERSE | board.curses.A_BOLD)
         self.assertIn("+0", selected[0][2])
         self.assertIn("-2", selected[0][2])
         self.assertIn("Passing", selected[0][2])
-        striped = [call for call in calls if call[0] == 3]
+        striped = [call for call in calls if call[0] == 2]
         self.assertEqual(striped[0][4], 6 << 8)
         self.assertFalse(striped[0][2].startswith("●"))
         self.assertIn("+1,234,567 / -56", striped[0][2])
         self.assertTrue(any("Failing" in call[2] and call[4] == 9 << 8 for call in striped))
         self.assertTrue(any("+1,234,567" in call[2] and call[4] == 7 << 8 for call in striped))
         self.assertTrue(any("-56" in call[2] and call[4] == 9 << 8 for call in striped))
-        header = next(value for row, _, value, *_ in calls if row == 1)
+        header = next(value for row, _, value, *_ in calls if row == 0)
         self.assertNotIn("WORKTREE", header)
         self.assertEqual(striped[0][2].index("Second"), header.index("TITLE"))
         self.assertTrue(any(row == 8 and "PR URL: https://github.com/o/r/pull/1" in value
@@ -631,7 +631,7 @@ class ShiprTests(unittest.TestCase):
         window.getmaxyx.return_value = (12, 110)
         app = board.ShiprApp(window, repo)
         app.items = [core.PullRequest(repo, {"number": 1, "headRefName": "feature"})]
-        with mock.patch.object(board.curses, "getmouse", return_value=(0, 5, 2, 0,
+        with mock.patch.object(board.curses, "getmouse", return_value=(0, 5, 1, 0,
                                                                         board.curses.BUTTON3_PRESSED)), \
              mock.patch.object(board, "find_pr_worktree", return_value=Path("/tmp/feature")) as find:
             app.handle_mouse()
