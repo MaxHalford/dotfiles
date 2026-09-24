@@ -1,167 +1,28 @@
-"""Curses worktree and pull request board for a Herdr terminal popup."""
+"""Curses pull request board for a Herdr terminal popup."""
 
 import curses
-import json
 import os
 import queue
-import re
-import signal
-import subprocess
 import sys
 import threading
 import time
 import traceback
-from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+
+from shipr_core import (
+    CommandError, Operation, PullRequest, checkout_pr, clean, has_changes, load_board,
+    open_herdr_worktree, open_pr, pr_status, publish, publish_from_main, repository_directory,
+    update_pr,
+)
 
 
 REFRESH_SECONDS = 30
-PR_FIELDS = "number,title,url,state,isDraft,headRefName,statusCheckRollup,reviewDecision"
-ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
-
-
-class CommandError(Exception):
-    pass
-
-
-class Operation:
-    def __init__(self, events):
-        self.events = events
-        self.cancelled = threading.Event()
-        self.lock = threading.Lock()
-        self.process = None
-
-    def stage(self, label):
-        self.events.put(("stage", label))
-
-    def line(self, value):
-        line = clean(value.strip())
-        if line:
-            try:
-                self.events.put_nowait(("line", line))
-            except queue.Full:
-                pass
-
-    def attach(self, process):
-        with self.lock:
-            self.process = process
-            cancelled = self.cancelled.is_set()
-        if cancelled:
-            self._signal(process, signal.SIGTERM)
-
-    def detach(self, process):
-        with self.lock:
-            if self.process is process:
-                self.process = None
-
-    @staticmethod
-    def _signal(process, sig):
-        if process.poll() is None:
-            try:
-                os.killpg(process.pid, sig)
-            except ProcessLookupError:
-                pass
-
-    def cancel(self):
-        self.cancelled.set()
-        with self.lock:
-            process = self.process
-        if process:
-            self._signal(process, signal.SIGTERM)
-
-            def force_stop():
-                with self.lock:
-                    still_current = self.process is process
-                if still_current:
-                    self._signal(process, signal.SIGKILL)
-
-            timer = threading.Timer(2, force_stop)
-            timer.daemon = True
-            timer.start()
-
-
-def run(argv, cwd=None, timeout=45, operation=None):
-    env = os.environ.copy()
-    env["GIT_TERMINAL_PROMPT"] = "0"
-    env["GH_PROMPT_DISABLED"] = "1"
-    if operation is not None:
-        if operation.cancelled.is_set():
-            raise CommandError("Cancelled; check Git status and PRs before retrying")
-        try:
-            with subprocess.Popen(
-                argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT, text=True, errors="replace", start_new_session=True
-            ) as process:
-                operation.attach(process)
-                output = deque(maxlen=200)
-                try:
-                    for line in process.stdout:
-                        output.append(line)
-                        operation.line(line)
-                    returncode = process.wait()
-                finally:
-                    operation.detach(process)
-        except OSError as error:
-            raise CommandError(str(error)) from error
-        if operation.cancelled.is_set():
-            raise CommandError("Cancelled; check Git status and PRs before retrying")
-        result = "".join(output)
-        if returncode:
-            raise CommandError(result[-4000:].strip() or f"Command failed: {argv[0]}")
-        return result
-    try:
-        result = subprocess.run(
-            argv, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout, check=False
-        )
-    except (OSError, subprocess.TimeoutExpired) as error:
-        raise CommandError(str(error)) from error
-    if result.returncode:
-        raise CommandError((result.stderr or result.stdout).strip() or f"Command failed: {argv[0]}")
-    return result.stdout
-
-
-def repository_directory():
-    context = json.loads(os.environ.get("HERDR_PLUGIN_CONTEXT_JSON", "{}"))
-    cwd = context.get("focused_pane_cwd") or context.get("workspace_cwd")
-    if cwd:
-        return Path(run(["git", "rev-parse", "--show-toplevel"], cwd=cwd).strip())
-    workspace_id = os.environ.get("HERDR_WORKSPACE_ID") or context.get("workspace_id")
-    pane_id = context.get("pane_id") or context.get("focused_pane_id")
-    snapshot_response = json.loads(run([os.environ.get("HERDR_BIN_PATH", "herdr"), "api", "snapshot"]))
-    snapshot = snapshot_response["result"]["snapshot"]
-    panes = snapshot["panes"]
-    candidates = [pane for pane in panes if pane.get("pane_id") == pane_id]
-    candidates += [pane for pane in panes if pane.get("workspace_id") == workspace_id and pane.get("focused")]
-    candidates += [pane for pane in panes if pane.get("workspace_id") == workspace_id]
-    if not candidates:
-        raise CommandError("No focused Herdr workspace was found")
-    cwd = candidates[0].get("foreground_cwd") or candidates[0].get("cwd")
-    if not cwd:
-        raise CommandError("The focused Herdr pane has no working directory")
-    return Path(run(["git", "rev-parse", "--show-toplevel"], cwd=cwd).strip())
-
-
-@dataclass
-class Worktree:
-    path: Path
-    branch: str
-    unavailable: bool = False
-    head: str = ""
-    dirty: bool = False
-    last_commit: int = 0
-    unique_commits: int = 0
-    current: bool = False
-    is_base: bool = False
-    relevant: bool = False
-    pr: Optional[dict] = None
-    pr_unavailable: bool = False
 
 
 @dataclass
 class ContextMenu:
-    tree: Worktree
+    tree: PullRequest
     x: int
     y: int
     width: int
@@ -169,18 +30,12 @@ class ContextMenu:
 
 
 def context_actions(tree):
-    if tree.unavailable or tree.branch == "(detached)":
-        return []
-    actions = []
-    if not tree.pr_unavailable and tree.pr and tree.pr.get("state") == "OPEN" and tree.pr.get("url"):
-        actions.append(("Open PR in GitHub", "open_pr"))
-    if not tree.pr_unavailable and not (tree.pr and tree.pr.get("state") == "OPEN"):
-        if tree.is_base:
-            label = "Commit & create branch/PR" if tree.dirty else "Create branch/PR"
-        else:
-            label = "Commit & create PR" if tree.dirty else "Create PR"
-        actions.append((label, "create_pr"))
-    actions.append(("Commit & push" if tree.dirty else "Push", "push"))
+    actions = [("Open PR in GitHub", "open_pr")]
+    if tree.worktree is None:
+        actions.append(("Open in new Herdr worktree", "checkout_pr"))
+    else:
+        actions.append(("Go to Herdr worktree", "focus_worktree"))
+        actions.append(("Commit & push to PR", "update_pr"))
     return actions
 
 
@@ -210,249 +65,6 @@ def draw_context_menu(window, menu):
                    "└" + "─" * (width - 2) + "┘", width, curses.A_BOLD)
 
 
-def parse_worktrees(raw):
-    trees = []
-    for record in raw.split("\0\0"):
-        fields = record.strip("\0").split("\0")
-        if not fields or not fields[0].startswith("worktree "):
-            continue
-        path = Path(fields[0][9:])
-        branch = next((field[7:] for field in fields if field.startswith("branch ")), "(detached)")
-        head = next((field[5:] for field in fields if field.startswith("HEAD ")), "")
-        if branch.startswith("refs/heads/"):
-            branch = branch[len("refs/heads/"):]
-        unavailable = any(field.startswith("prunable ") for field in fields) or not path.is_dir()
-        trees.append(Worktree(path, branch, unavailable, head=head))
-    return trees
-
-
-def matching_pr(prs, branch):
-    matches = [pr for pr in prs if pr.get("headRefName") == branch]
-    return next((pr for pr in matches if pr.get("state") == "OPEN"), matches[0] if matches else None)
-
-
-def pr_status(pr):
-    if not pr:
-        return "No PR"
-    state = pr.get("state", "UNKNOWN")
-    if state != "OPEN":
-        return state.title()
-    label = "Draft" if pr.get("isDraft") else "Open"
-    checks = pr.get("statusCheckRollup") or []
-    failed = sum(check.get("conclusion") in ("FAILURE", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED") or check.get("state") in ("FAILURE", "ERROR") for check in checks)
-    pending = sum(check.get("status") in ("IN_PROGRESS", "QUEUED", "PENDING") or check.get("state") in ("PENDING", "EXPECTED") for check in checks)
-    if failed:
-        label += f" / {failed} failing"
-    elif pending:
-        label += f" / {pending} pending"
-    elif checks:
-        label += " / checks complete"
-    review = pr.get("reviewDecision")
-    if review == "CHANGES_REQUESTED":
-        label += " / changes requested"
-    elif review == "REVIEW_REQUIRED":
-        label += " / review needed"
-    return label
-
-
-def default_base(repo, trees):
-    try:
-        remote = run(["git", "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"],
-                     cwd=repo).strip()
-    except CommandError:
-        remote = ""
-    if remote:
-        branch = remote.split("/", 1)[-1]
-        if any(tree.branch == branch for tree in trees):
-            return branch
-        return remote
-    for branch in ("main", "master"):
-        try:
-            run(["git", "rev-parse", "--verify", f"refs/heads/{branch}"], cwd=repo)
-            return branch
-        except CommandError:
-            pass
-    return trees[0].branch if trees and trees[0].branch != "(detached)" else None
-
-
-def age_label(timestamp, now=None):
-    if not timestamp:
-        return "-"
-    seconds = max(0, int((time.time() if now is None else now) - timestamp))
-    if seconds < 60:
-        return "just now"
-    if seconds < 3600:
-        return f"{seconds // 60}m ago"
-    if seconds < 86400:
-        return f"{seconds // 3600}h ago"
-    if seconds < 604800:
-        return f"{seconds // 86400}d ago"
-    if seconds < 2592000:
-        return f"{seconds // 604800}w ago"
-    if seconds < 31536000:
-        return f"{seconds // 2592000}mo ago"
-    return f"{seconds // 31536000}y ago"
-
-
-def visible_worktrees(trees, show_all=False):
-    return [tree for tree in trees if show_all or tree.relevant]
-
-
-def local_status(tree):
-    if tree.unavailable:
-        return "unavailable"
-    if tree.dirty:
-        return "dirty"
-    if tree.unique_commits:
-        suffix = "commit" if tree.unique_commits == 1 else "commits"
-        return f"+{tree.unique_commits} {suffix}"
-    return "clean"
-
-
-def load_board(repo):
-    raw = run(["git", "worktree", "list", "--porcelain", "-z"], cwd=repo)
-    trees = parse_worktrees(raw)
-    base = default_base(repo, trees)
-    commit_times = {}
-    unique_counts = {}
-    error = ""
-    try:
-        prs = json.loads(run(["gh", "pr", "list", "--state", "all", "--limit", "500", "--json", PR_FIELDS], cwd=repo))
-    except (CommandError, ValueError) as exc:
-        prs = []
-        error = f"GitHub refresh failed: {exc}"
-    for tree in trees:
-        if tree.unavailable:
-            continue
-        tree.is_base = bool(base and tree.branch == (base[7:] if base.startswith("origin/") else base))
-        tree.pr_unavailable = bool(error)
-        try:
-            tree.dirty = bool(run(["git", "status", "--porcelain"], cwd=tree.path))
-        except CommandError:
-            tree.unavailable = True
-            continue
-        if tree.head:
-            if tree.head not in commit_times:
-                try:
-                    commit_times[tree.head] = int(run(["git", "show", "-s", "--format=%ct", tree.head],
-                                                      cwd=repo).strip())
-                except (CommandError, ValueError):
-                    commit_times[tree.head] = 0
-            tree.last_commit = commit_times[tree.head]
-            if base and tree.branch != base:
-                if tree.head not in unique_counts:
-                    try:
-                        unique_counts[tree.head] = int(run(["git", "rev-list", "--count",
-                                                           f"{base}..{tree.head}"], cwd=repo).strip())
-                    except (CommandError, ValueError):
-                        unique_counts[tree.head] = 0
-                tree.unique_commits = unique_counts[tree.head]
-        tree.pr = matching_pr(prs, tree.branch)
-        tree.current = tree.path.resolve() == repo.resolve()
-        tree.relevant = tree.current or tree.dirty or tree.unique_commits > 0 or bool(
-            tree.pr and tree.pr.get("state") == "OPEN"
-        )
-        if base is None and tree.branch != "(detached)":
-            tree.relevant = True
-    trees.sort(key=lambda tree: (not tree.current, -tree.last_commit, tree.path.name))
-    return trees, error
-
-
-def has_changes(path, operation=None):
-    return bool(run(["git", "status", "--porcelain"], cwd=path, operation=operation))
-
-
-def commit_all(path, message, operation=None):
-    if operation:
-        operation.stage("Checking changes")
-    if not has_changes(path, operation):
-        return False
-    if operation:
-        operation.stage("Staging all changes")
-    run(["git", "add", "-A"], cwd=path, operation=operation)
-    if operation:
-        operation.stage("Committing (hooks may run)")
-    run(["git", "commit", "-m", message], cwd=path, timeout=120, operation=operation)
-    return True
-
-
-def push(path, branch, operation=None):
-    if operation:
-        operation.stage("Pushing branch")
-    try:
-        run(["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"], cwd=path,
-            operation=operation)
-    except CommandError:
-        if operation and operation.cancelled.is_set():
-            raise
-        run(["git", "push", "-u", "origin", branch], cwd=path, timeout=120, operation=operation)
-    else:
-        run(["git", "push"], cwd=path, timeout=120, operation=operation)
-
-
-def open_pr(tree):
-    if not tree.pr or tree.pr.get("state") != "OPEN" or not tree.pr.get("url"):
-        raise CommandError("No open PR URL is available; refresh and retry")
-    run(["open", tree.pr["url"]], cwd=tree.path)
-
-
-def validate_new_branch(path, branch, operation=None):
-    branch = branch.strip()
-    if not branch:
-        raise CommandError("A branch name is required")
-    try:
-        run(["git", "check-ref-format", "--branch", branch], cwd=path, operation=operation)
-    except CommandError as error:
-        raise CommandError(f"Invalid branch name: {branch}") from error
-    refs = run(["git", "for-each-ref", "--format=%(refname:short)",
-                "refs/heads", "refs/remotes/origin"], cwd=path, operation=operation).splitlines()
-    taken = set(refs)
-    if branch in taken or f"origin/{branch}" in taken:
-        raise CommandError(f"Branch already exists: {branch}")
-    return branch
-
-
-def publish(tree, message, create_pr, operation=None, branch_name=None):
-    if tree.unavailable or tree.branch == "(detached)":
-        raise CommandError("This worktree has no usable branch")
-    if create_pr and tree.pr and tree.pr.get("state") == "OPEN":
-        raise CommandError("This branch already has an open pull request")
-    if create_pr and tree.pr_unavailable:
-        raise CommandError("GitHub PR status is unavailable; refresh before creating a PR")
-    branch = tree.branch
-    if create_pr:
-        if operation:
-            operation.stage("Checking PR base branch")
-        default_branch = run(
-            ["gh", "repo", "view", "--json", "defaultBranchRef", "--jq", ".defaultBranchRef.name"],
-            cwd=tree.path, operation=operation,
-        ).strip()
-        if branch == default_branch:
-            if not message or not has_changes(tree.path, operation):
-                raise CommandError("The default branch needs uncommitted changes to create a PR")
-            branch = validate_new_branch(tree.path, branch_name or "", operation)
-            if operation:
-                operation.stage(f"Creating branch {branch}")
-            run(["git", "switch", "-c", branch], cwd=tree.path, operation=operation)
-        elif branch_name:
-            raise CommandError("This worktree is no longer on the default branch; refresh and retry")
-    if message:
-        commit_all(tree.path, message, operation)
-    elif has_changes(tree.path, operation):
-        raise CommandError("A commit message is required for uncommitted changes")
-    push(tree.path, branch, operation)
-    if create_pr:
-        if operation:
-            operation.stage("Opening pull request")
-        return run(["gh", "pr", "create", "--fill", "--head", branch], cwd=tree.path,
-                   timeout=120, operation=operation).strip()
-    return "Changes pushed"
-
-
-def clean(value):
-    return "".join(ch if ch.isprintable() else " " for ch in ANSI_ESCAPE.sub("", str(value)))
-
-
 def draw_line(window, row, text, width, style=0):
     if row < 0 or row >= window.getmaxyx()[0]:
         return
@@ -472,22 +84,12 @@ def feedback_style(message):
 
 
 def status_style(tree):
-    if tree.unavailable or tree.pr_unavailable or not tree.pr:
-        return curses.A_DIM
     pr = tree.pr
-    if pr.get("state") == "MERGED":
-        return curses.color_pair(4)
-    if pr.get("state") != "OPEN":
-        return curses.A_DIM
-    checks = pr.get("statusCheckRollup") or []
-    if pr.get("reviewDecision") == "CHANGES_REQUESTED" or any(
-        check.get("conclusion") in ("FAILURE", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED")
-        or check.get("state") in ("FAILURE", "ERROR") for check in checks
-    ):
+    if pr.get("reviewDecision") == "CHANGES_REQUESTED":
         return curses.color_pair(3)
     if pr.get("isDraft"):
         return curses.color_pair(5)
-    if "pending" in pr_status(pr) or pr.get("reviewDecision") == "REVIEW_REQUIRED":
+    if pr.get("reviewDecision") == "REVIEW_REQUIRED":
         return curses.color_pair(2)
     return curses.color_pair(1)
 
@@ -572,6 +174,332 @@ def confirm(window, label):
     return answer is not None and answer.lower() in ("", "y", "yes")
 
 
+class ShiprApp:
+    def __init__(self, window, repo):
+        self.window = window
+        self.repo = repo
+        self.items = []
+        self.current_tree = None
+        self.error = ""
+        self.selected = 0
+        self.offset = 0
+        self.refreshed = 0.0
+        self.message = "Loading pull requests..."
+        self.message_persistent = False
+        self.menu = None
+        self.updates = queue.Queue(maxsize=1)
+        self.action_events = queue.Queue(maxsize=128)
+        self.refreshing = False
+        self.active_action = None
+        self.action_stage = ""
+        self.action_line = ""
+        self.action_started = 0.0
+        self.closing_after_cancel = False
+
+    @staticmethod
+    def item_key(item):
+        return item.pr.get("number")
+
+    def selected_item(self):
+        return self.items[self.selected] if self.items else None
+
+    def select_key(self, key):
+        self.selected = next((i for i, item in enumerate(self.items) if self.item_key(item) == key), 0)
+
+    def start_refresh(self):
+        if self.refreshing:
+            return
+        self.refreshing = True
+
+        def worker():
+            try:
+                self.updates.put((load_board(self.repo), None))
+            except Exception as exc:
+                self.updates.put((None, str(exc)))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def receive_refresh(self):
+        try:
+            result, failure = self.updates.get_nowait()
+        except queue.Empty:
+            return
+        self.refreshing = False
+        self.refreshed = time.monotonic()
+        if failure:
+            if self.active_action is None and not self.message_persistent:
+                self.message = f"✗ Refresh failed: {failure}"
+            return
+        selected = self.selected_item()
+        key = self.item_key(selected) if selected else None
+        self.items, self.current_tree, self.error = result
+        self.menu = None
+        self.select_key(key)
+        if self.active_action is None and not self.message_persistent:
+            self.message = f"✗ {self.error}" if self.error else f"Updated {time.strftime('%H:%M:%S')}"
+
+    def receive_actions(self):
+        for _ in range(128):
+            try:
+                kind, value = self.action_events.get_nowait()
+            except queue.Empty:
+                return False
+            if kind == "stage":
+                self.action_stage = value
+                self.action_line = ""
+            elif kind == "line":
+                self.action_line = value
+            elif kind == "checked_out":
+                return True
+            elif kind == "done":
+                self.active_action = None
+                self.message = value
+                self.message_persistent = True
+                self.action_stage = ""
+                self.action_line = ""
+                if self.closing_after_cancel:
+                    return True
+                self.start_refresh()
+        return False
+
+    def draw_row(self, row, item, branch_width, path_width, width):
+        selected_style = curses.A_REVERSE if row - 2 + self.offset == self.selected else 0
+        local = item.worktree.name if item.worktree else "—"
+        prefix = f"#{item.pr['number']:<6} {item.branch:<{branch_width}.{branch_width}} "
+        prefix += f"{local:<{path_width}.{path_width}} {pr_status(item.pr):<24.24} "
+        status = item.pr.get("title") or "(untitled)"
+        draw_line(self.window, row, prefix + status, width, selected_style)
+        if len(prefix) < width - 1:
+            self.window.addnstr(row, len(prefix), clean(status), width - len(prefix) - 1,
+                                selected_style | status_style(item))
+
+    def draw(self):
+        window = self.window
+        height, width = window.getmaxyx()
+        visible = max(1, height - 5)
+        self.selected = max(0, min(self.selected, len(self.items) - 1))
+        self.offset = max(0, min(self.offset, self.selected))
+        if self.selected >= self.offset + visible:
+            self.offset = self.selected - visible + 1
+        window.erase()
+        loading = "  refreshing..." if self.refreshing else ""
+        draw_line(window, 0, f"shipr  •  {self.repo.name}  •  {len(self.items)} open PRs  "
+                  f"({REFRESH_SECONDS}s refresh){loading}", width, curses.A_BOLD)
+        branch_width = max(12, (width - 66) // 3)
+        path_width = max(12, (width - 66) // 3)
+        header = f"{'PR':<7} {'BRANCH':<{branch_width}} {'WORKTREE':<{path_width}} {'STATUS':<24} TITLE"
+        draw_line(window, 1, header, width, curses.A_UNDERLINE)
+        for row, item in enumerate(self.items[self.offset:self.offset + visible], start=2):
+            self.draw_row(row, item, branch_width, path_width, width)
+        if self.active_action is None:
+            draw_line(window, height - 3,
+                      "↑↓ select  right-click PR  p publish current  u push current  r refresh  q close", width)
+            item = self.selected_item()
+            if item:
+                detail = f"PR #{item.pr['number']}  {item.pr.get('title', '')}  {item.worktree or 'not checked out'}"
+            else:
+                detail = "No open PRs. Create a worktree in Herdr, then press p to publish it."
+            draw_line(window, height - 2, detail, width)
+            draw_line(window, height - 1, self.message or self.error, width,
+                      feedback_style(self.message or self.error))
+        else:
+            elapsed = int(time.monotonic() - self.action_started)
+            spinner = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"[int((time.monotonic() - self.action_started) * 10) % 10]
+            draw_line(window, height - 3, "q cancel and close after the current command stops", width)
+            draw_line(window, height - 2,
+                      f"{spinner} {self.action_stage or 'Starting'}  {elapsed // 60:02d}:{elapsed % 60:02d}",
+                      width, curses.A_BOLD)
+            draw_line(window, height - 1, self.action_line or "Waiting for command output...", width)
+        if self.menu is not None:
+            draw_context_menu(window, self.menu)
+        window.refresh()
+
+    def handle_mouse(self):
+        try:
+            _, x, y, _, buttons = curses.getmouse()
+        except curses.error:
+            return None, False
+        height, width = self.window.getmaxyx()
+        row_index = self.offset + y - 2
+        on_row = 2 <= y < 2 + max(1, height - 5) and 0 <= row_index < len(self.items)
+        if buttons & (curses.BUTTON3_PRESSED | curses.BUTTON3_CLICKED):
+            self.menu = context_menu(self.items[row_index], x, y, width, height) if on_row else None
+            if on_row:
+                self.selected = row_index
+                if self.menu is None:
+                    self.message = "! This row has no available actions"
+            return None, False
+        if buttons & (curses.BUTTON1_PRESSED | curses.BUTTON1_CLICKED):
+            action = menu_choice(self.menu, x, y) if self.menu is not None else None
+            self.menu = None
+            if action is not None:
+                return action, False
+            if on_row:
+                self.selected = row_index
+        return None, False
+
+    def start_action(self, work, success):
+        self.active_action = Operation(self.action_events)
+        operation = self.active_action
+        self.message_persistent = False
+        self.action_started = time.monotonic()
+        self.action_stage = "Starting"
+        self.action_line = ""
+
+        def worker():
+            try:
+                result = work(operation)
+            except Exception as exc:
+                summary = str(exc).splitlines()[-1] if str(exc) else type(exc).__name__
+                self.action_events.put(("done", f"✗ {summary}"))
+            else:
+                self.action_events.put(success(result))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def publish_action(self, tree, create_pr):
+        if tree is None or tree.unavailable or tree.branch == "(detached)":
+            self.message = "! Open shipr from an available branch worktree"
+            return
+        if create_pr and tree.pr and tree.pr.get("state") == "OPEN":
+            self.message = "! This branch already has an open PR"
+            return
+        if create_pr and tree.pr_unavailable:
+            self.message = "! GitHub status is unavailable; refresh before creating a PR"
+            return
+        from_main = create_pr and tree.is_base
+        verb = "create a Herdr worktree and PR" if from_main else "create a PR" if create_pr else "push"
+        if not confirm(self.window, f"{verb} for {tree.branch}?"):
+            self.message = "○ Cancelled"
+            return
+        try:
+            dirty_now = has_changes(tree.path)
+        except CommandError as exc:
+            self.message = f"✗ {exc}"
+            return
+        if from_main and not dirty_now:
+            self.message = "! The default branch needs uncommitted changes to create a PR"
+            return
+        branch_name = None
+        if from_main:
+            branch_name = prompt(self.window, "New branch name: ")
+            if not branch_name:
+                self.message = "○ Cancelled: branch name required"
+                return
+        commit_message = prompt(self.window, "Commit message: ") if dirty_now else ""
+        if dirty_now and not commit_message:
+            self.message = "○ Cancelled: commit message required"
+            return
+        if from_main:
+            self.start_action(lambda operation: publish_from_main(tree, branch_name, commit_message, operation),
+                              lambda _result: ("checked_out", None))
+        else:
+            self.start_action(
+                lambda operation: publish(tree, commit_message, create_pr, operation),
+                lambda result: ("done", f"✓ {'PR created: ' + result if create_pr else result}"),
+            )
+
+    def update_pr_action(self, item):
+        if item.worktree is None:
+            self.message = "! Open this PR in a Herdr worktree before pushing"
+            return
+        if not confirm(self.window, f"Push worktree changes to PR #{item.pr['number']}?"):
+            self.message = "○ Cancelled"
+            return
+        try:
+            dirty_now = has_changes(item.worktree)
+        except CommandError as exc:
+            self.message = f"✗ {exc}"
+            return
+        commit_message = prompt(self.window, "Commit message: ") if dirty_now else ""
+        if dirty_now and not commit_message:
+            self.message = "○ Cancelled: commit message required"
+            return
+        self.start_action(lambda operation: update_pr(item, commit_message, operation),
+                          lambda result: ("done", f"✓ {result}"))
+
+    def handle_action(self, action_id):
+        item = self.selected_item()
+        if item is None:
+            return False
+        if action_id == "open_pr":
+            try:
+                open_pr(item)
+            except CommandError as exc:
+                self.message = f"✗ {exc}"
+            else:
+                number = item.pr.get("number")
+                self.message = f"✓ Opened PR #{number} in GitHub" if number else "✓ Opened PR in GitHub"
+            return False
+        if action_id == "focus_worktree":
+            if self.current_tree and item.worktree == self.current_tree.path:
+                return True
+            try:
+                open_herdr_worktree(self.repo, item.worktree, item.branch)
+            except CommandError as exc:
+                self.message = f"✗ {exc}"
+                return False
+            return True
+        if action_id == "checkout_pr":
+            self.start_action(lambda operation: checkout_pr(item, operation),
+                              lambda _path: ("checked_out", None))
+            return False
+        if action_id == "update_pr":
+            self.update_pr_action(item)
+            return False
+        self.message = "! Unknown action"
+        return False
+
+    def handle_key(self, key):
+        if self.active_action is not None:
+            if key == ord("q") and not self.closing_after_cancel:
+                self.closing_after_cancel = True
+                self.active_action.cancel()
+                self.action_stage = "Cancelling"
+            return False
+        if key == ord("q"):
+            return True
+        action = None
+        if key == curses.KEY_MOUSE:
+            action, close = self.handle_mouse()
+            if close:
+                return True
+            if action is None:
+                return False
+        if key in (curses.KEY_DOWN, ord("j")):
+            self.menu = None
+            self.selected = min(self.selected + 1, max(0, len(self.items) - 1))
+        elif key in (curses.KEY_UP, ord("k")):
+            self.menu = None
+            self.selected = max(0, self.selected - 1)
+        elif key == ord("r"):
+            self.menu = None
+            self.start_refresh()
+            self.message_persistent = False
+            self.message = "Refreshing..."
+        elif key == ord("p"):
+            self.menu = None
+            self.publish_action(self.current_tree, True)
+        elif key == ord("u"):
+            self.menu = None
+            self.publish_action(self.current_tree, False)
+        elif action is not None:
+            return self.handle_action(action[1])
+        return False
+
+    def run(self):
+        self.start_refresh()
+        while True:
+            if self.receive_actions():
+                return
+            self.receive_refresh()
+            if self.active_action is None and time.monotonic() - self.refreshed >= REFRESH_SECONDS:
+                self.start_refresh()
+            self.draw()
+            if self.handle_key(self.window.getch()):
+                return
+
+
 def main(window):
     curses.curs_set(0)
     curses.set_escdelay(25)
@@ -581,250 +509,7 @@ def main(window):
     init_colors()
     window.keypad(True)
     window.timeout(100)
-    repo = repository_directory()
-    all_trees = []
-    trees = []
-    show_all = False
-    error = ""
-    selected = 0
-    offset = 0
-    refreshed = 0.0
-    message = "Loading worktrees and pull requests..."
-    updates = queue.Queue(maxsize=1)
-    action_events = queue.Queue(maxsize=128)
-    refreshing = False
-    active_action = None
-    action_stage = ""
-    action_line = ""
-    action_started = 0.0
-    closing_after_cancel = False
-    message_persistent = False
-    menu = None
-
-    def start_refresh():
-        nonlocal refreshing
-        if refreshing:
-            return
-        refreshing = True
-
-        def worker():
-            try:
-                updates.put((load_board(repo), None))
-            except Exception as exc:
-                updates.put((None, str(exc)))
-
-        threading.Thread(target=worker, daemon=True).start()
-
-    start_refresh()
-    while True:
-        for _ in range(128):
-            try:
-                kind, value = action_events.get_nowait()
-            except queue.Empty:
-                break
-            if kind == "stage":
-                action_stage = value
-                action_line = ""
-            elif kind == "line":
-                action_line = value
-            elif kind == "done":
-                active_action = None
-                message = value
-                message_persistent = True
-                action_stage = ""
-                action_line = ""
-                if closing_after_cancel:
-                    return
-                start_refresh()
-        try:
-            result, refresh_error = updates.get_nowait()
-        except queue.Empty:
-            pass
-        else:
-            refreshing = False
-            refreshed = time.monotonic()
-            if refresh_error:
-                if active_action is None and not message_persistent:
-                    message = f"✗ Refresh failed: {refresh_error}"
-            else:
-                chosen = str(trees[selected].path) if trees else ""
-                all_trees, error = result
-                trees = visible_worktrees(all_trees, show_all)
-                menu = None
-                selected = next((i for i, tree in enumerate(trees) if str(tree.path) == chosen), 0)
-                if active_action is None and not message_persistent:
-                    message = f"✗ {error}" if error else f"Updated {time.strftime('%H:%M:%S')}"
-        if active_action is None and time.monotonic() - refreshed >= REFRESH_SECONDS:
-            start_refresh()
-        height, width = window.getmaxyx()
-        visible = max(1, height - 5)
-        selected = max(0, min(selected, len(trees) - 1))
-        offset = max(0, min(offset, selected))
-        if selected >= offset + visible:
-            offset = selected - visible + 1
-        window.erase()
-        loading = "  refreshing..." if refreshing else ""
-        mode = "all" if show_all else "relevant"
-        draw_line(window, 0, f"shipr  •  {repo.name}  •  {len(trees)}/{len(all_trees)} {mode}  "
-                  f"({REFRESH_SECONDS}s refresh){loading}",
-                  width, curses.A_BOLD)
-        age_width = 11
-        branch_width = max(12, (width - 51) // 3)
-        path_width = max(12, (width - 51) // 3)
-        draw_line(window, 1, f"{'LAST COMMIT':<{age_width}} {'WORKTREE':<{path_width}} "
-                  f"{'BRANCH':<{branch_width}} {'CHANGES':<10} PR STATUS", width, curses.A_UNDERLINE)
-        for row, tree in enumerate(trees[offset:offset + visible], start=2):
-            local = local_status(tree)
-            status = "Unavailable" if tree.unavailable else ("PR unavailable" if tree.pr_unavailable else pr_status(tree.pr))
-            age = age_label(tree.last_commit)
-            prefix = f"{age:<{age_width}.{age_width}} {tree.path.name:<{path_width}.{path_width}} "
-            prefix += f"{tree.branch:<{branch_width}.{branch_width}} {local:<10.10} "
-            selected_style = curses.A_REVERSE if row - 2 + offset == selected else 0
-            draw_line(window, row, prefix + status, width, selected_style)
-            if len(prefix) < width - 1:
-                window.addnstr(row, len(prefix), clean(status), width - len(prefix) - 1,
-                               selected_style | status_style(tree))
-        if active_action is None:
-            toggle = "a relevant" if show_all else "a all"
-            draw_line(window, height - 3,
-                      f"↑↓ select  right-click actions  r refresh  {toggle}  q close", width)
-            detail = f"{selected + 1}/{len(trees)}  {trees[selected].path}" if trees else "No worktrees found"
-            draw_line(window, height - 2, detail, width)
-            draw_line(window, height - 1, message or error, width, feedback_style(message or error))
-        else:
-            elapsed = int(time.monotonic() - action_started)
-            spinner = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"[int((time.monotonic() - action_started) * 10) % 10]
-            draw_line(window, height - 3, "q cancel and close after the current command stops", width)
-            draw_line(window, height - 2, f"{spinner} {action_stage or 'Starting'}  {elapsed // 60:02d}:{elapsed % 60:02d}",
-                      width, curses.A_BOLD)
-            draw_line(window, height - 1, action_line or "Waiting for command output...", width)
-        if menu is not None:
-            draw_context_menu(window, menu)
-        window.refresh()
-        key = window.getch()
-        if active_action is not None:
-            if key == ord("q"):
-                if not closing_after_cancel:
-                    closing_after_cancel = True
-                    active_action.cancel()
-                    action_stage = "Cancelling"
-            continue
-        if key == ord("q"):
-            return
-        action = None
-        if key == curses.KEY_MOUSE:
-            try:
-                _, x, y, _, buttons = curses.getmouse()
-            except curses.error:
-                continue
-            row_index = offset + y - 2
-            on_row = 2 <= y < 2 + visible and 0 <= row_index < len(trees)
-            if buttons & (curses.BUTTON3_PRESSED | curses.BUTTON3_CLICKED):
-                if on_row:
-                    selected = row_index
-                    menu = context_menu(trees[selected], x, y, width, height)
-                    if menu is None:
-                        message = "! This worktree has no available actions"
-                else:
-                    menu = None
-                continue
-            if buttons & (curses.BUTTON1_PRESSED | curses.BUTTON1_CLICKED):
-                if menu is not None:
-                    action = menu_choice(menu, x, y)
-                    menu = None
-                if action is None:
-                    if on_row:
-                        selected = row_index
-                    elif 2 <= y < height - 3:
-                        return
-                    continue
-            else:
-                continue
-        if key in (curses.KEY_DOWN, ord("j")):
-            menu = None
-            selected = min(selected + 1, max(0, len(trees) - 1))
-        elif key in (curses.KEY_UP, ord("k")):
-            menu = None
-            selected = max(0, selected - 1)
-        elif key == ord("r"):
-            menu = None
-            start_refresh()
-            message_persistent = False
-            message = "Refreshing..."
-        elif key == ord("a"):
-            menu = None
-            chosen = str(trees[selected].path) if trees else ""
-            show_all = not show_all
-            trees = visible_worktrees(all_trees, show_all)
-            selected = next((i for i, tree in enumerate(trees) if str(tree.path) == chosen), 0)
-            message = "Showing all registered worktrees" if show_all else "Showing relevant worktrees"
-            message_persistent = False
-        elif action is not None:
-            _, action_id = action
-            tree = trees[selected]
-            if tree.unavailable or tree.branch == "(detached)":
-                message = "! Select an available worktree with a branch"
-                continue
-            if action_id == "open_pr":
-                try:
-                    open_pr(tree)
-                except CommandError as exc:
-                    message = f"✗ {exc}"
-                else:
-                    number = tree.pr.get("number")
-                    message = f"✓ Opened PR #{number} in GitHub" if number else "✓ Opened PR in GitHub"
-                continue
-            create_pr = action_id == "create_pr"
-            if create_pr and tree.pr and tree.pr.get("state") == "OPEN":
-                message = "! This branch already has an open PR"
-                continue
-            if create_pr and tree.pr_unavailable:
-                message = "! GitHub status is unavailable; refresh before creating a PR"
-                continue
-            if create_pr:
-                verb = "create a branch and PR" if tree.is_base else "create a PR"
-            else:
-                verb = "push"
-            if not confirm(window, f"{verb} for {tree.branch}?"):
-                message = "○ Cancelled"
-                continue
-            try:
-                dirty_now = has_changes(tree.path)
-            except CommandError as exc:
-                message = f"✗ {exc}"
-                continue
-            if create_pr and tree.is_base and not dirty_now:
-                message = "! The default branch needs changes to create a PR"
-                continue
-            branch_name = None
-            if create_pr and tree.is_base:
-                branch_name = prompt(window, "New branch name: ")
-                if not branch_name:
-                    message = "○ Cancelled: branch name required"
-                    continue
-            commit_message = prompt(window, "Commit message: ") if dirty_now else ""
-            if dirty_now and not commit_message:
-                message = "○ Cancelled: commit message required"
-                continue
-            active_action = Operation(action_events)
-            message_persistent = False
-            action_started = time.monotonic()
-            action_stage = "Starting"
-            action_line = ""
-
-            def worker(chosen_tree=tree, chosen_message=commit_message, should_create=create_pr,
-                       chosen_branch=branch_name, operation=active_action):
-                try:
-                    result = publish(chosen_tree, chosen_message, should_create, operation,
-                                     branch_name=chosen_branch)
-                except Exception as exc:
-                    summary = str(exc).splitlines()[-1] if str(exc) else type(exc).__name__
-                    action_events.put(("done", f"✗ {summary}"))
-                else:
-                    summary = f"PR created: {result}" if should_create else result
-                    action_events.put(("done", f"✓ {summary}"))
-
-            threading.Thread(target=worker, daemon=True).start()
+    ShiprApp(window, repository_directory()).run()
 
 
 if __name__ == "__main__":
