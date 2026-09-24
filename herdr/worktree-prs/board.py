@@ -3,11 +3,11 @@
 import curses
 import os
 import queue
+import re
 import sys
 import threading
 import time
 import traceback
-import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -346,6 +346,7 @@ class ShiprApp:
         if buttons & (curses.BUTTON3_PRESSED | curses.BUTTON3_CLICKED):
             self.menu = context_menu(self.items[row_index], x, y, width, height) if on_row else None
             if on_row:
+                self.created_pr_url = ""
                 self.selected = row_index
                 if self.menu is None:
                     self.message = "! This row has no available actions"
@@ -356,6 +357,7 @@ class ShiprApp:
             if action is not None:
                 return action, False
             if on_row:
+                self.created_pr_url = ""
                 self.selected = row_index
         return None, False
 
