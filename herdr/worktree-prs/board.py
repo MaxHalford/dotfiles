@@ -172,6 +172,8 @@ def context_actions(tree):
     if tree.unavailable or tree.branch == "(detached)":
         return []
     actions = []
+    if not tree.pr_unavailable and tree.pr and tree.pr.get("state") == "OPEN" and tree.pr.get("url"):
+        actions.append(("Open PR in GitHub", "open_pr"))
     if not tree.pr_unavailable and not (tree.pr and tree.pr.get("state") == "OPEN"):
         if tree.is_base:
             label = "Commit & create branch/PR" if tree.dirty else "Create branch/PR"
@@ -386,6 +388,12 @@ def push(path, branch, operation=None):
         run(["git", "push", "-u", "origin", branch], cwd=path, timeout=120, operation=operation)
     else:
         run(["git", "push"], cwd=path, timeout=120, operation=operation)
+
+
+def open_pr(tree):
+    if not tree.pr or tree.pr.get("state") != "OPEN" or not tree.pr.get("url"):
+        raise CommandError("No open PR URL is available; refresh and retry")
+    run(["open", tree.pr["url"]], cwd=tree.path)
 
 
 def validate_new_branch(path, branch, operation=None):
@@ -754,10 +762,19 @@ def main(window):
         elif action is not None:
             _, action_id = action
             tree = trees[selected]
-            create_pr = action_id == "create_pr"
             if tree.unavailable or tree.branch == "(detached)":
                 message = "! Select an available worktree with a branch"
                 continue
+            if action_id == "open_pr":
+                try:
+                    open_pr(tree)
+                except CommandError as exc:
+                    message = f"✗ {exc}"
+                else:
+                    number = tree.pr.get("number")
+                    message = f"✓ Opened PR #{number} in GitHub" if number else "✓ Opened PR in GitHub"
+                continue
+            create_pr = action_id == "create_pr"
             if create_pr and tree.pr and tree.pr.get("state") == "OPEN":
                 message = "! This branch already has an open PR"
                 continue

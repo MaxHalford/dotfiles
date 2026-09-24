@@ -28,7 +28,7 @@ Codex starts with `FORCE_COLOR=1` so its prompt stays readable across appearance
 ## Herdr shortcuts
 
 - `Cmd+D`: Open Reviewr. Press `s` to send comments to the agent or `q` to close.
-- `Cmd+G`: Open shipr. Right-click a worktree to commit and push or create a PR; press `q` to close or cancel an active command.
+- `Cmd+G`: Open shipr. Right-click a worktree to push, create a PR, or open its existing PR in GitHub; press `q` to close or cancel an active command.
 - `Ctrl+B`, then `m`: Open Mermaid preview.
 
 ## Editors
