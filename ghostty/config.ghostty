@@ -9,9 +9,8 @@ keybind = alt+backspace=text:\x1b\x7f
 # Open the fzf-powered Zsh history search with Option+R.
 keybind = alt+r=text:\x12
 
-# Follow macOS appearance. The Moon variant lifts ANSI green for readable shell highlighting.
-theme = light:Rose Pine Dawn,dark:Rose Pine Moon Clear Diffs
-window-theme = system
+# Follow macOS appearance with Ghostty's bundled Rosé Pine themes.
+theme = light:Rose Pine Dawn,dark:Rose Pine
 
 window-padding-x = 8
 window-padding-y = 6

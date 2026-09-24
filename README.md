@@ -48,15 +48,23 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/mas
 python make_symlinks.py
 ```
 
+The script creates `~/dotfiles` as a stable link to this checkout and points
+installed config links through it. If you move the checkout, run the script
+again from its new location to update the anchor and installed links.
+
 The symlink script also installs the Ghostty configuration. It maps
 Option+Delete to backward word deletion and Option+R to fzf history search;
 Zsh maps Tab to normal completion. Ghostty follows the macOS appearance with
-Rosé Pine Dawn and a Moon variant whose ANSI green is light enough for shell
-syntax highlighting. Powerlevel10k uses the themes' high-contrast ANSI
-surface/text pair instead of the incompatible rainbow palette defaults.
+its bundled Rosé Pine Dawn and Rosé Pine themes. Powerlevel10k uses their ANSI
+surface/text pair for readable segments in both modes.
 
-The Herdr configuration uses the same accessible green and replaces its pale
-blue active tabs with a high-contrast Rosé Pine gray treatment.
+Herdr switches between its built-in Rosé Pine Dawn and Rosé Pine themes.
+Codex uses its own default terminal colors and syntax theme. In Codex 0.155.0,
+an open session keeps the terminal colors it detected at startup, so its prompt
+and diff backgrounds may lag after macOS changes appearance. Herdr 0.9.0 can
+also keep reporting the old terminal background to programs inside its panes.
+The symlink script installs `codex/AGENTS.md` as global Codex guidance at
+`~/.codex/AGENTS.md`; it points to the local `~/.codex/RTK.md` instructions.
 
 Install or update the tracked Herdr plugins and agent integrations:
 

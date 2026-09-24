@@ -3,7 +3,7 @@ notify = ["/Users/max/.codex/computer-use/Codex Computer Use.app/Contents/Shared
 # Emit clickable file citations that open in Visual Studio Code. In Herdr,
 # hold Shift to bypass pane mouse capture and Cmd-click the resulting link.
 file_opener = "vscode"
-model = "gpt-5.6-sol"
+model = "gpt-6-sol"
 model_reasoning_effort = "high"
 
 [marketplaces.openai-bundled]
@@ -189,6 +189,27 @@ trust_level = "trusted"
 trust_level = "trusted"
 
 [projects."/Users/max/projects/turbopuffer/tpuf-benchmark"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/bike-sharing-history"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/max/rolodex"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/max/everbench"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/max/prince"]
+trust_level = "trusted"
+
+[projects."/Users/max/scratch"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/max/dotfiles"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/max"]
 trust_level = "trusted"
 
 [tui.model_availability_nux]

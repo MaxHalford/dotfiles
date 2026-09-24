@@ -1,15 +1,10 @@
 onboarding = false
 
 [theme]
-name = "terminal"
-
-[theme.custom]
-panel_bg = "reset"
-# Herdr 0.8.2 derives active-tab text from surface_dim. This pairing gives the tabs a muted
-# Rosé Pine gray background with high-contrast text, while keeping separators unobtrusive.
-accent = "#908caa"
-surface_dim = "#191724"
-green = "#a6da95"
+name = "rose-pine"
+auto_switch = true
+light_name = "rose-pine-dawn"
+dark_name = "rose-pine"
 
 [terminal]
 default_shell = "/bin/zsh"
