@@ -45,3 +45,7 @@ Use `~/.secrets` for secrets and `~/.zshrc.local` for machine-specific shell set
 | `r` | Refresh pull requests. |
 | `q` | Close shipr or cancel the current action. |
 | `Enter` | Focus or create the selected PR's worktree. |
+
+
+
+kylie jenner
