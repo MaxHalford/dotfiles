@@ -9,6 +9,9 @@ keybind = alt+backspace=text:\x1b\x7f
 # Open the fzf-powered Zsh history search with Option+R.
 keybind = alt+r=text:\x12
 
+# Let Herdr handle Cmd+G for the pull request pane.
+keybind = super+g=unbind
+
 # Follow macOS appearance with Ghostty's bundled Rosé Pine themes.
 theme = light:Rose Pine Dawn,dark:Rose Pine
 

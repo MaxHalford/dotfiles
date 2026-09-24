@@ -22,3 +22,9 @@ key = "prefix+m"
 type = "plugin_action"
 command = "dev.volpestyle.mermaid-preview.open"
 description = "open Mermaid preview"
+
+[[keys.command]]
+key = "cmd+g"
+type = "plugin_action"
+command = "dev.max.worktree-prs.open"
+description = "browse worktree pull requests"

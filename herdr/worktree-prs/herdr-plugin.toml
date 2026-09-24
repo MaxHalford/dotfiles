@@ -1,0 +1,20 @@
+id = "dev.max.worktree-prs"
+name = "Worktree pull requests"
+version = "0.1.0"
+min_herdr_version = "0.9.0"
+description = "Review and publish pull requests from the current repository's worktrees"
+platforms = ["macos"]
+
+[[actions]]
+id = "open"
+title = "Open worktree pull requests"
+contexts = ["workspace"]
+command = ["python3", "open.py"]
+
+[[panes]]
+id = "board"
+title = "Worktree pull requests"
+placement = "popup"
+width = "90%"
+height = "80%"
+command = ["python3", "board.py"]

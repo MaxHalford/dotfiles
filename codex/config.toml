@@ -7,12 +7,10 @@ model = "gpt-6-sol"
 model_reasoning_effort = "high"
 
 [marketplaces.openai-bundled]
-last_updated = "2026-09-09T07:09:45Z"
 source_type = "local"
 source = "/Users/max/.codex/.tmp/bundled-marketplaces/openai-bundled"
 
 [marketplaces.openai-primary-runtime]
-last_updated = "2026-09-09T07:10:46Z"
 source_type = "local"
 source = "/Users/max/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
 
@@ -49,6 +47,15 @@ enabled = true
 [plugins."browser@openai-bundled"]
 enabled = true
 
+[plugins."codex-app-tools@openai-bundled"]
+enabled = true
+
+[plugins."unified-computer-use@openai-bundled"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
+enabled = true
+
 [features]
 hooks = true
 js_repl = false
@@ -65,20 +72,16 @@ NODE_REPL_NODE_MODULE_DIRS = "/Applications/ChatGPT.app/Contents/Resources/cua_n
 NODE_REPL_NODE_PATH = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node"
 NODE_REPL_TRUSTED_CODE_PATHS = "/Users/max/.codex:/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
 CODEX_HOME = "/Users/max/.codex"
-NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "8e86beb821b9afc846211798e0113bd4b9e79312dfcd135eb447bdb154f64071"
 BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
-NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
-NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
-NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = "Control desktop apps on macOS through Computer Use."
+BROWSER_USE_TINYSKY_ENABLED = "1"
+NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = ""
+NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = ""
+NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = ""
 BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-BROWSER_USE_CODEX_APP_VERSION = "26.803.61601"
+BROWSER_USE_CODEX_APP_VERSION = "26.903.61454"
+NODE_REPL_TRUSTED_SERVICES = '{"browser":"/Users/max/.codex/plugins/cache/openai-bundled/browser/26.903.61454/scripts/browser-service.mjs","sky":"@oai/sky/service"}'
+SKY_CUA_SERVICE_PATH = "/Users/max/.codex/computer-use/Codex Computer Use.app"
 CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
-
-[mcp_servers.computer-use]
-command = "./Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient"
-args = ["mcp"]
-cwd = "."
-enabled = false
 
 [mcp_servers.CodSpeed]
 url = "https://mcp.codspeed.io/mcp"
@@ -123,10 +126,17 @@ url = "https://mcp.cloudflare.com/mcp"
 [mcp_servers.cloudflare.tools.execute]
 approval_mode = "approve"
 
+[mcp_servers.computer-use]
+command = "./Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient"
+args = ["mcp"]
+cwd = "."
+enabled = false
+
 [desktop]
 conversationDetailMode = "STEPS_COMMANDS"
 ambient-suggestions-enabled = false
 followUpQueueMode = "queue"
+toys-confetti-enabled = true
 
 [projects."/Users/max/projects"]
 trust_level = "trusted"
@@ -212,6 +222,12 @@ trust_level = "trusted"
 [projects."/Users/max/projects/max"]
 trust_level = "trusted"
 
+[projects."/Users/max/projects/max/paperman"]
+trust_level = "trusted"
+
+[tui]
+screen_reader_detection_done = true
+
 [tui.model_availability_nux]
 "gpt-5.6-sol" = 4
 gpt-6-astra = 4
@@ -225,6 +241,4 @@ trusted_hash = "sha256:59e85fcf0a3273d73647f33a8b441d55e30816666c0b100cfddc1282b
 approval_mode = "approve"
 
 [shell_environment_policy.set]
-BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
 NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "8e86beb821b9afc846211798e0113bd4b9e79312dfcd135eb447bdb154f64071"
-NODE_REPL_TRUSTED_CODE_PATHS = "/Users/max/.codex:/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
