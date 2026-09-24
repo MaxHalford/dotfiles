@@ -146,6 +146,29 @@ class ShiprTests(unittest.TestCase):
                              git("rev-parse", "refs/heads/contributor/fix", cwd=fork))
             self.assertEqual(git("branch", "--show-current", cwd=pr_tree), "shipr/pr-42-abcdef1234")
 
+    def test_pr_push_uses_the_repository_shape_returned_by_gh(self):
+        row = core.PullRequest(Path("/tmp/project"), {"number": 3}, Path("/tmp/project"))
+        details = {"state": "OPEN", "headRefName": "test-again",
+                   "headRepository": {"name": "dotfiles", "nameWithOwner": "MaxHalford/dotfiles"},
+                   "headRepositoryOwner": {"login": "MaxHalford"},
+                   "url": "https://github.com/MaxHalford/dotfiles/pull/3"}
+        with mock.patch.object(core, "run", side_effect=[json.dumps(details), ""]) as command:
+            core.push_to_pr(row)
+        self.assertEqual(command.call_args_list[1], mock.call(
+            ["git", "push", "https://github.com/MaxHalford/dotfiles.git",
+             "HEAD:refs/heads/test-again"], cwd=row.worktree, timeout=120, operation=None))
+
+    def test_fork_pr_push_uses_the_pr_host(self):
+        row = core.PullRequest(Path("/tmp/project"), {"number": 42}, Path("/tmp/pr"))
+        details = {"state": "OPEN", "headRefName": "fix",
+                   "headRepository": {"nameWithOwner": "contributor/fork"},
+                   "url": "https://git.example.com/base/project/pull/42"}
+        with mock.patch.object(core, "run", side_effect=[json.dumps(details), ""]) as command:
+            core.push_to_pr(row)
+        self.assertEqual(command.call_args_list[1].args[0],
+                         ["git", "push", "https://git.example.com/contributor/fork.git",
+                          "HEAD:refs/heads/fix"])
+
     def test_closed_pr_is_not_pushed(self):
         row = core.PullRequest(Path("/tmp/project"), {"number": 42}, Path("/tmp/pr"))
         with mock.patch.object(core, "run", return_value='{"state":"CLOSED"}') as command:

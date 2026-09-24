@@ -11,6 +11,7 @@ from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlsplit
 
 
 PR_FIELDS = "number,title,url,state,isDraft,headRefName,reviewDecision"
@@ -376,11 +377,20 @@ def push_to_pr(row, operation=None):
     if operation:
         operation.stage(f"Checking PR #{number} push target")
     pr = json.loads(run(["gh", "pr", "view", str(number), "--json",
-                         "state,headRefName,headRepository"], cwd=row.repo, operation=operation))
+                         "state,headRefName,headRepository,headRepositoryOwner,url"],
+                        cwd=row.repo, operation=operation))
     if pr.get("state") != "OPEN":
         raise CommandError(f"PR #{number} is no longer open")
     repository = pr.get("headRepository") or {}
     url = repository.get("url")
+    if not url:
+        slug = repository.get("nameWithOwner")
+        owner = (pr.get("headRepositoryOwner") or {}).get("login")
+        if not slug and owner and repository.get("name"):
+            slug = f"{owner}/{repository['name']}"
+        pr_url = urlsplit(pr.get("url") or "")
+        if slug and len(slug.split("/")) == 2 and pr_url.scheme == "https" and pr_url.netloc:
+            url = f"{pr_url.scheme}://{pr_url.netloc}/{slug}"
     branch = pr.get("headRefName")
     if not url or not branch:
         raise CommandError(f"PR #{number} has no available head repository and branch")
