@@ -312,7 +312,7 @@ class ShiprApp:
             self.draw_row(row, item, branch_width, path_width, width)
         if self.active_action is None:
             draw_line(window, height - 3,
-                      "↑↓ select  right-click PR  p publish current  u push current  o open PR  r refresh  q close", width)
+                      "↑↓ select  right-click PR  p publish/push current  o open PR  r refresh  q close", width)
             item = self.selected_item()
             if self.created_pr_url:
                 detail = f"PR URL: {self.created_pr_url}"
@@ -381,18 +381,17 @@ class ShiprApp:
 
         threading.Thread(target=worker, daemon=True).start()
 
-    def publish_action(self, tree, create_pr):
+    def publish_action(self, tree):
         if tree is None or tree.unavailable or tree.branch == "(detached)":
             self.message = "! Open shipr from an available branch worktree"
             return
-        if create_pr and tree.pr and tree.pr.get("state") == "OPEN":
-            self.message = "! This branch already has an open PR"
+        if tree.pr_unavailable:
+            self.message = "! GitHub status is unavailable; refresh before publishing or pushing"
             return
-        if create_pr and tree.pr_unavailable:
-            self.message = "! GitHub status is unavailable; refresh before creating a PR"
-            return
+        create_pr = not (tree.pr and tree.pr.get("state") == "OPEN")
         from_main = create_pr and tree.is_base
-        verb = "create a branch here and open a PR" if from_main else "create a PR" if create_pr else "push"
+        verb = ("create a branch here and open a PR" if from_main else "create a PR" if create_pr
+                else f"push to PR #{tree.pr['number']}")
         if not confirm(self.window, f"{verb} for {tree.branch}?"):
             self.message = "○ Cancelled"
             return
@@ -505,10 +504,7 @@ class ShiprApp:
             self.message = "Refreshing..."
         elif key == ord("p"):
             self.menu = None
-            self.publish_action(self.current_tree, True)
-        elif key == ord("u"):
-            self.menu = None
-            self.publish_action(self.current_tree, False)
+            self.publish_action(self.current_tree)
         elif key == ord("o"):
             self.menu = None
             if self.created_pr_url:

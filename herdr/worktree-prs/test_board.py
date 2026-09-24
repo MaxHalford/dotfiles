@@ -305,8 +305,7 @@ class ShiprTests(unittest.TestCase):
         with mock.patch.object(app, "publish_action") as publish:
             app.handle_key(ord("p"))
             app.handle_key(ord("u"))
-        self.assertEqual(publish.call_args_list,
-                         [mock.call(app.current_tree, True), mock.call(app.current_tree, False)])
+        publish.assert_called_once_with(app.current_tree)
 
     def test_main_publish_uses_same_worktree_flow(self):
         repo = Path("/tmp/project")
@@ -317,12 +316,35 @@ class ShiprTests(unittest.TestCase):
              mock.patch.object(board, "prompt", side_effect=["topic/fix", "Fix it"]), \
              mock.patch.object(app, "start_action") as start, \
              mock.patch.object(board, "publish_from_main", return_value="https://github.com/o/r/pull/42") as publish:
-            app.publish_action(tree, True)
+            app.publish_action(tree)
             work, success = start.call_args.args
             self.assertEqual(work(None), "https://github.com/o/r/pull/42")
         publish.assert_called_once_with(tree, "topic/fix", "Fix it", None)
         self.assertEqual(success("https://github.com/o/r/pull/42"),
                          ("created", "https://github.com/o/r/pull/42"))
+
+    def test_p_pushes_when_current_branch_already_has_an_open_pr(self):
+        repo = Path("/tmp/project")
+        tree = core.Worktree(repo, "feature", pr={"number": 42, "state": "OPEN"})
+        app = board.ShiprApp(mock.Mock(), repo)
+        with mock.patch.object(board, "confirm", return_value=True) as confirm, \
+             mock.patch.object(board, "has_changes", return_value=False), \
+             mock.patch.object(app, "start_action") as start, \
+             mock.patch.object(board, "publish", return_value="Changes pushed") as publish:
+            app.publish_action(tree)
+            work, success = start.call_args.args
+            self.assertEqual(work(None), "Changes pushed")
+        self.assertIn("push to PR #42", confirm.call_args.args[1])
+        publish.assert_called_once_with(tree, "", False, None)
+        self.assertEqual(success("Changes pushed"), ("done", "✓ Changes pushed"))
+
+    def test_p_waits_for_pr_status_before_choosing_an_action(self):
+        tree = core.Worktree(Path("/tmp/project"), "feature", pr_unavailable=True)
+        app = board.ShiprApp(mock.Mock(), tree.path)
+        with mock.patch.object(app, "start_action") as start:
+            app.publish_action(tree)
+        start.assert_not_called()
+        self.assertIn("GitHub status is unavailable", app.message)
 
     def test_created_pr_url_remains_available_and_selects_new_row(self):
         repo = Path("/tmp/project")
