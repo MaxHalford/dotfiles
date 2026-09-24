@@ -8,15 +8,34 @@ import signal
 import subprocess
 import threading
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlsplit
 
 
-PR_FIELDS = "number,title,url,state,isDraft,headRefName,reviewDecision"
-PR_LIMIT = 50
+PR_LIMIT = 25
+PR_PAGE_QUERY = """
+query($owner: String!, $name: String!, $first: Int!, $after: String) {
+  repository(owner: $owner, name: $name) {
+    pullRequests(first: $first, after: $after, states: OPEN,
+                 orderBy: {field: UPDATED_AT, direction: DESC}) {
+      nodes {
+        number title url state isDraft headRefName reviewDecision additions deletions
+        commits(last: 1) {
+          nodes { commit { committedDate statusCheckRollup { state } } }
+        }
+      }
+      pageInfo { endCursor hasNextPage }
+      totalCount
+    }
+  }
+}
+"""
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+PR_ALIAS = re.compile(r"shipr/pr-(\d+)(?:-[0-9a-f]{10}(?:-\d+)?)?")
 
 
 class CommandError(Exception):
@@ -172,6 +191,16 @@ class PullRequest:
         return self.pr.get("headRefName") or ""
 
 
+@dataclass
+class BoardPage:
+    items: list
+    current: Worktree
+    next_cursor: Optional[str]
+    total_count: int
+    error: str = ""
+    pages_loaded: int = 1
+
+
 def parse_worktrees(raw):
     trees = []
     for record in raw.split("\0\0"):
@@ -189,7 +218,7 @@ def parse_worktrees(raw):
 
 
 def matching_pr(prs, branch):
-    alias = re.fullmatch(r"shipr/pr-(\d+)(?:-[0-9a-f]{10}(?:-\d+)?)?", branch)
+    alias = PR_ALIAS.fullmatch(branch)
     if alias:
         return next((pr for pr in prs if str(pr.get("number")) == alias.group(1)), None)
     matches = [pr for pr in prs if pr.get("headRefName") == branch and pr.get("state") == "OPEN"]
@@ -231,13 +260,71 @@ def default_base(repo, trees):
     return trees[0].branch if trees and trees[0].branch != "(detached)" else None
 
 
-def load_open_prs(repo):
+@lru_cache(maxsize=32)
+def github_repository(repo):
+    if not (os.environ.get("GH_REPO") or os.environ.get("GH_HOST")):
+        try:
+            remote = run(["git", "remote", "get-url", "origin"], cwd=repo).strip()
+        except CommandError:
+            remote = ""
+        location = urlsplit(remote) if "://" in remote else None
+        if location:
+            host, path = location.hostname, location.path
+        else:
+            ssh = re.fullmatch(r"(?:[^@]+@)?([^:]+):(.+)", remote)
+            host, path = (ssh.group(1), ssh.group(2)) if ssh else (None, "")
+        if host == "github.com":
+            parts = path.strip("/").removesuffix(".git").split("/")
+            if len(parts) == 2 and all(parts):
+                return parts[0], parts[1], host
+    details = json.loads(run(["gh", "repo", "view", "--json", "nameWithOwner,url"], cwd=repo))
+    owner, name = details["nameWithOwner"].split("/", 1)
+    host = urlsplit(details["url"]).hostname
+    return owner, name, host
+
+
+def load_open_prs(repo, cursor=None):
     try:
-        prs = json.loads(run(["gh", "pr", "list", "--state", "open", "--limit", str(PR_LIMIT),
-                              "--json", PR_FIELDS], cwd=repo))
-    except (CommandError, ValueError) as exc:
-        return [], f"GitHub refresh failed: {exc}"
-    return prs, ""
+        owner, name, host = github_repository(repo)
+        command = ["gh", "api", "graphql"]
+        if host and host != "github.com":
+            command.extend(["--hostname", host])
+        command.extend(["-f", f"query={PR_PAGE_QUERY}", "-f", f"owner={owner}",
+                        "-f", f"name={name}", "-F", f"first={PR_LIMIT}"])
+        if cursor:
+            command.extend(["-f", f"after={cursor}"])
+        response = json.loads(run(command, cwd=repo, timeout=60))
+        if response.get("errors"):
+            raise CommandError(response["errors"][0].get("message", "GraphQL query failed"))
+        connection = response["data"]["repository"]["pullRequests"]
+        prs = []
+        for raw in connection["nodes"]:
+            pr = dict(raw)
+            commits = pr.pop("commits", {}).get("nodes") or []
+            commit = (commits[-1].get("commit") or {}) if commits else {}
+            pr["lastCommitAt"] = commit.get("committedDate")
+            rollup = commit.get("statusCheckRollup")
+            pr["statusCheckRollup"] = [{"state": rollup["state"]}] if rollup else []
+            prs.append(pr)
+        page_info = connection["pageInfo"]
+        next_cursor = page_info["endCursor"] if page_info["hasNextPage"] else None
+        total_count = connection["totalCount"]
+    except (CommandError, KeyError, TypeError, ValueError, IndexError) as exc:
+        return [], None, 0, f"GitHub refresh failed: {exc}"
+    return prs, next_cursor, total_count, ""
+
+
+def current_branch_pr(repo, branch):
+    alias = PR_ALIAS.fullmatch(branch)
+    if alias:
+        details = json.loads(run(["gh", "pr", "view", alias.group(1), "--json",
+                                  "number,state,headRefName,url"], cwd=repo))
+        return details if details.get("state") == "OPEN" else None
+    prs = json.loads(run(["gh", "pr", "list", "--state", "open", "--head", branch,
+                          "--limit", "2", "--json", "number,state,headRefName,url"], cwd=repo))
+    if len(prs) > 1:
+        raise CommandError(f"Multiple open PRs use branch {branch}; choose one from the table")
+    return matching_pr(prs, branch)
 
 
 def enrich_worktree(tree, repo, base, prs, pr_error):
@@ -255,31 +342,53 @@ def enrich_worktree(tree, repo, base, prs, pr_error):
     tree.current = tree.path.resolve() == repo.resolve()
 
 
-def pull_request_rows(repo, prs, trees):
-    rows = []
-    paths_by_branch = {tree.branch: tree.path for tree in trees if not tree.unavailable}
-    for pr in prs:
-        if pr.get("state") != "OPEN" or not pr.get("number"):
-            continue
-        worktree = next((tree.path for tree in trees if not tree.unavailable and
-                         tree.branch.startswith(f"shipr/pr-{pr['number']}-")), None)
-        if worktree is None:
-            worktree = paths_by_branch.get(f"shipr/pr-{pr['number']}")
-        if worktree is None and sum(other.get("headRefName") == pr.get("headRefName") for other in prs) == 1:
-            worktree = paths_by_branch.get(pr.get("headRefName"))
-        rows.append(PullRequest(repo, pr, worktree))
-    return rows
+def find_pr_worktree(row, known_prs):
+    trees = parse_worktrees(run(["git", "worktree", "list", "--porcelain", "-z"], cwd=row.repo))
+    available = [tree for tree in trees if not tree.unavailable]
+    for tree in available:
+        alias = PR_ALIAS.fullmatch(tree.branch)
+        if alias and int(alias.group(1)) == row.pr["number"]:
+            return tree.path
+    if row.branch and sum(pr.get("headRefName") == row.branch for pr in known_prs) == 1:
+        matches = [tree.path for tree in available if tree.branch == row.branch]
+        if len(matches) == 1:
+            return matches[0]
+    return None
 
 
-def load_board(repo):
-    trees = parse_worktrees(run(["git", "worktree", "list", "--porcelain", "-z"], cwd=repo))
-    base = default_base(repo, trees)
-    prs, error = load_open_prs(repo)
-    current = next((tree for tree in trees if tree.path.resolve() == repo.resolve()), None)
-    if current is None:
-        raise CommandError("The current directory is not a registered worktree")
+def load_pr_pages(repo, cursor, pages):
+    prs = []
+    next_cursor = cursor
+    total_count = 0
+    error = ""
+    pages_loaded = 0
+    for _ in range(pages):
+        page, next_cursor, total_count, error = load_open_prs(repo, next_cursor)
+        if error:
+            break
+        pages_loaded += 1
+        prs.extend(page)
+        if not next_cursor or not page:
+            break
+    return prs, next_cursor, total_count, error, pages_loaded
+
+
+def load_board(repo, cursor=None, pages=1):
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        prs_future = pool.submit(load_pr_pages, repo, cursor, pages)
+        branch = run(["git", "branch", "--show-current"], cwd=repo).strip() or "(detached)"
+        current = Worktree(repo, branch)
+        base = default_base(repo, [current])
+        prs, next_cursor, total_count, error, pages_loaded = prs_future.result()
     enrich_worktree(current, repo, base, prs, error)
-    return pull_request_rows(repo, prs, trees), current, error
+    rows = []
+    seen = set()
+    for pr in prs:
+        number = pr.get("number")
+        if pr.get("state") == "OPEN" and number and number not in seen:
+            rows.append(PullRequest(repo, pr))
+            seen.add(number)
+    return BoardPage(rows, current, next_cursor, total_count, error, pages_loaded)
 
 
 def has_changes(path, operation=None):
