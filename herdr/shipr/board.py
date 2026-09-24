@@ -545,7 +545,7 @@ class ShiprApp:
             self.draw_row(row, item, branch_width, diff_width, width)
         if self.active_action is None:
             draw_line(window, height - 3,
-                      "↑↓/PgDn select  Enter worktree  p publish/push  o open PR  r refresh  q close", width)
+                      "↑↓ select  ←→ pages  Enter worktree  p publish/push  o open PR  r refresh  q close", width)
             item = self.selected_item()
             if self.created_pr_url:
                 detail = f"PR URL: {self.created_pr_url}"
@@ -750,13 +750,13 @@ class ShiprApp:
             self.menu = None
             self.created_pr_url = ""
             self.selected = max(0, self.selected - 1)
-        elif key == curses.KEY_NPAGE:
+        elif key in (curses.KEY_NPAGE, curses.KEY_RIGHT):
             self.menu = None
             self.created_pr_url = ""
             self.selected = min(self.selected + max(1, self.window.getmaxyx()[0] - 5),
                                 max(0, len(self.items) - 1))
             self.maybe_load_more()
-        elif key == curses.KEY_PPAGE:
+        elif key in (curses.KEY_PPAGE, curses.KEY_LEFT):
             self.menu = None
             self.created_pr_url = ""
             self.selected = max(0, self.selected - max(1, self.window.getmaxyx()[0] - 5))

@@ -42,6 +42,14 @@ class CommandError(Exception):
     pass
 
 
+def command_failure(argv, output):
+    lines = output.strip().splitlines()
+    if argv[:2] == ["git", "push"] and len(lines) > 1 and \
+            lines[-1].startswith("error: failed to push some refs"):
+        lines.pop()
+    return "\n".join(lines).strip() or f"Command failed: {argv[0]}"
+
+
 class Operation:
     def __init__(self, events):
         self.events = events
@@ -102,6 +110,10 @@ def run(argv, cwd=None, timeout=45, operation=None):
     env = os.environ.copy()
     env["GIT_TERMINAL_PROMPT"] = "0"
     env["GH_PROMPT_DISABLED"] = "1"
+    if cwd is not None and argv[:2] in (["git", "commit"], ["git", "push"]):
+        venv_bin = Path(cwd) / ".venv" / "bin"
+        if venv_bin.is_dir():
+            env["PATH"] = f"{venv_bin}{os.pathsep}{env.get('PATH', '')}"
     if operation is not None:
         if operation.cancelled.is_set():
             raise CommandError("Cancelled; check Git status and PRs before retrying")
@@ -125,7 +137,7 @@ def run(argv, cwd=None, timeout=45, operation=None):
             raise CommandError("Cancelled; check Git status and PRs before retrying")
         result = "".join(output)
         if returncode:
-            raise CommandError(result[-4000:].strip() or f"Command failed: {argv[0]}")
+            raise CommandError(command_failure(argv, result[-4000:]))
         return result
     try:
         result = subprocess.run(
@@ -134,7 +146,7 @@ def run(argv, cwd=None, timeout=45, operation=None):
     except (OSError, subprocess.TimeoutExpired) as error:
         raise CommandError(str(error)) from error
     if result.returncode:
-        raise CommandError((result.stderr or result.stdout).strip() or f"Command failed: {argv[0]}")
+        raise CommandError(command_failure(argv, result.stderr or result.stdout))
     return result.stdout
 
 

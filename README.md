@@ -25,7 +25,8 @@ Ghostty and VS Code use Rosé Pine Dawn in light mode and Rosé Pine Moon in dar
 
 ## Herdr shortcuts
 
-- `Cmd+D`: Open Reviewr. Press `s` to send comments to the agent or `q` to close.
+- `Cmd+D`: Open Reviewr. Press `e` on a file or diff line to open it in VS Code; press `s` to send comments to the agent or `q` to close.
+- `Cmd+E`: Open the focused Herdr pane's current directory in VS Code.
 - `Cmd+G`: Open shipr's PR table. It loads 25 PRs first and fetches more as you navigate toward the end. The first column shows time since the latest commit, and loaded PRs are sorted newest first. Press `Enter` to focus or open the selected PR's Herdr worktree, `p` to publish or push from the current worktree, `o` to open the PR in GitHub, `r` to refresh, and `q` to close or cancel an active command. Right-click a PR for more actions.
 
 From a dirty default branch, `p` asks for a branch and commit message, creates the branch in the current worktree, commits and pushes the changes, and opens the PR. The current pane and Codex session stay in place. Shipr shows the PR URL after creation and selects its row on refresh. You can also use `p` from an existing feature branch. Opening an existing PR creates a separate Herdr worktree from the PR head. Pushing a PR checks its current head repository and branch again before sending commits.

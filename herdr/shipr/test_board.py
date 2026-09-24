@@ -197,6 +197,22 @@ class ShiprTests(unittest.TestCase):
         self.assertEqual(app.selected_item().pr["number"], 25)
         self.assertIsNone(app.next_cursor)
 
+    def test_left_and_right_arrows_move_visible_pages(self):
+        repo = Path("/tmp/project")
+        window = mock.Mock()
+        window.getmaxyx.return_value = (10, 100)
+        app = board.ShiprApp(window, repo)
+        app.items = [core.PullRequest(repo, {"number": number}) for number in range(20)]
+        app.handle_key(board.curses.KEY_RIGHT)
+        self.assertEqual(app.selected, 5)
+        app.handle_key(board.curses.KEY_LEFT)
+        self.assertEqual(app.selected, 0)
+        app.selected = 14
+        with mock.patch.object(app, "start_load_more") as load_more:
+            app.handle_key(board.curses.KEY_RIGHT)
+        self.assertEqual(app.selected, 19)
+        load_more.assert_called_once()
+
     def test_last_commit_age_and_sort_order(self):
         repo = Path("/tmp/project")
         newer = core.PullRequest(repo, {"number": 2, "lastCommitAt": "2026-09-25T12:00:00Z"})
@@ -429,6 +445,31 @@ class ShiprTests(unittest.TestCase):
             self.assertEqual(git("stash", "list", cwd=checkout), "")
             self.assertIn(["git", "switch", "-c", "topic/fix"], commands)
             self.assertFalse(any(argv[0] == os.environ.get("HERDR_BIN_PATH", "herdr") for argv in commands))
+
+    def test_push_finds_project_venv_tool_for_stale_hook_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            checkout = repository(root)
+            origin = root / "origin.git"
+            git("init", "--bare", str(origin), cwd=root)
+            git("remote", "add", "origin", str(origin), cwd=checkout)
+            git("switch", "-c", "topic", cwd=checkout)
+            hook = checkout / ".git" / "hooks" / "pre-push"
+            hook.write_text("#!/bin/sh\nexec prek\n")
+            hook.chmod(0o755)
+            venv_bin = checkout / ".venv" / "bin"
+            venv_bin.mkdir(parents=True)
+            prek = venv_bin / "prek"
+            prek.write_text("#!/bin/sh\nexit 0\n")
+            prek.chmod(0o755)
+            core.push(checkout, "topic")
+            self.assertEqual(git("rev-parse", "topic", cwd=checkout),
+                             git("rev-parse", "refs/heads/topic", cwd=origin))
+
+    def test_push_error_surfaces_hook_failure(self):
+        output = ".git/hooks/pre-push: exec: prek: not found\nerror: failed to push some refs to 'origin'"
+        self.assertEqual(core.command_failure(["git", "push"], output),
+                         ".git/hooks/pre-push: exec: prek: not found")
 
     def test_failed_branch_creation_keeps_main_changes(self):
         with tempfile.TemporaryDirectory() as directory:

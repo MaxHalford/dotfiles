@@ -13,13 +13,13 @@ Shipr is a Herdr popup for browsing GitHub pull requests and working with them i
 From this repository, link the plugin for local development:
 
 ```sh
-herdr plugin link /path/to/dotfiles/herdr/worktree-prs
+herdr plugin link /path/to/dotfiles/herdr/shipr
 ```
 
 Once published on GitHub, install the plugin from its repository subdirectory:
 
 ```sh
-herdr plugin install MaxHalford/dotfiles/herdr/worktree-prs
+herdr plugin install MaxHalford/dotfiles/herdr/shipr
 ```
 
 Bind the `dev.max.worktree-prs.open` action in your Herdr configuration, or invoke it with `herdr plugin action invoke dev.max.worktree-prs.open`.
@@ -29,7 +29,8 @@ Bind the `dev.max.worktree-prs.open` action in your Herdr configuration, or invo
 | Key | Action |
 | --- | --- |
 | `↑` / `↓`, `j` / `k` | Select a PR; loading another page starts near the end. |
-| `Page Up` / `Page Down`, `Home` / `End` | Move through the table. |
+| `←` / `→`, `Page Up` / `Page Down` | Move one visible page through the table; more PRs load at the end. |
+| `Home` / `End` | Jump to the first or last loaded PR. |
 | `Enter` | Focus the PR's Herdr worktree, or create one from its head if needed. |
 | `p` | Publish changes from the current worktree, or commit and push to its open PR. |
 | `o` | Open the selected or newly created PR in the browser. |
@@ -38,12 +39,14 @@ Bind the `dev.max.worktree-prs.open` action in your Herdr configuration, or invo
 
 Right-click a PR for its actions, including commit and push when a matching worktree exists. From a dirty default branch, `p` asks for a branch and commit message, then creates the branch in the same worktree, commits, pushes, and opens a PR.
 
+For commits and pushes, shipr includes the current worktree's `.venv/bin` on `PATH` so Git hooks can find tools installed in that environment.
+
 The first load requests 25 open PRs and their latest commit time, diff size, review state, and aggregate CI state. Worktree matching runs only when you press `Enter` or right-click a PR. More PRs load as you navigate toward the end. Fetched PRs are sorted by latest commit, newest first; additional pages can move rows into a new position. The source pages use GitHub's PR update order, so a PR outside the loaded pages is not part of the sort yet. The table refreshes every 60 seconds while open.
 
 ## Test
 
 ```sh
-python3 -m unittest discover -s herdr/worktree-prs -p 'test_*.py' -q
+python3 -m unittest discover -s herdr/shipr -p 'test_*.py' -q
 ```
 
 ## Publishing
