@@ -21,17 +21,27 @@ python make_symlinks.py
 
 Use `~/.secrets` for secrets and `~/.zshrc.local` for machine-specific shell settings; both are sourced by `.zshrc` when present.
 
-Ghostty and VS Code use Rosé Pine Dawn in light mode and Rosé Pine Moon in dark mode. Herdr follows Ghostty's palette. Reload Ghostty after keybinding changes with `Cmd+Shift+,`.
-
 ## Herdr shortcuts
 
-- `Cmd+D`: Open Reviewr. Press `e` on a file or diff line to open it in VS Code; press `s` to send comments to the agent or `q` to close.
-- `Cmd+E`: Open the focused Herdr pane's current directory in VS Code.
-- `Cmd+G`: Open shipr's PR table. It loads 25 PRs first and fetches more as you navigate toward the end. The first column shows time since the latest commit, and loaded PRs are sorted newest first. Press `Enter` to focus or open the selected PR's Herdr worktree, `p` to publish or push from the current worktree, `o` to open the PR in GitHub, `r` to refresh, and `q` to close or cancel an active command. Right-click a PR for more actions.
+| Shortcut | Action |
+| --- | --- |
+| `Cmd+D` | Open Reviewr. |
+| `Cmd+E` | Open the focused pane's current directory in VS Code. |
+| `Cmd+G` | Open [shipr](herdr/shipr/README.md). |
 
-From a dirty default branch, `p` asks for a branch and commit message, creates the branch in the current worktree, commits and pushes the changes, and opens the PR. The current pane and Codex session stay in place. Shipr shows the PR URL after creation and selects its row on refresh. You can also use `p` from an existing feature branch. Opening an existing PR creates a separate Herdr worktree from the PR head. Pushing a PR checks its current head repository and branch again before sending commits.
-- `Ctrl+B`, then `m`: Open Mermaid preview.
+### Reviewr
 
-## Editors
+| Key | Action |
+| --- | --- |
+| `e` | Open the selected file or diff line in VS Code. |
+| `q` | Close Reviewr. |
 
-Refresh the tracked VS Code extension list with `code --list-extensions > vscode/extensions.txt`. Zed settings are linked by `make_symlinks.py`; install a Rosé Pine theme extension in Zed to match VS Code's Dawn and Moon themes.
+### Shipr
+
+| Key | Action |
+| --- | --- |
+| `p` | Publish changes or push to the current PR. |
+| `o` | Open the PR in the browser. |
+| `r` | Refresh pull requests. |
+| `q` | Close shipr or cancel the current action. |
+| `Enter` | Focus or create the selected PR's worktree. |

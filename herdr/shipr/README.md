@@ -31,13 +31,20 @@ Bind the `dev.max.worktree-prs.open` action in your Herdr configuration, or invo
 | `↑` / `↓`, `j` / `k` | Select a PR; loading another page starts near the end. |
 | `←` / `→`, `Page Up` / `Page Down` | Move one visible page through the table; more PRs load at the end. |
 | `Home` / `End` | Jump to the first or last loaded PR. |
-| `Enter` | Focus the PR's Herdr worktree, or create one from its head if needed. |
-| `p` | Publish changes from the current worktree, or commit and push to its open PR. |
+| `Enter` | Focus the PR's Herdr worktree, or create a separate worktree from its head if needed. |
+| `p` | Publish or push changes from the current worktree. |
 | `o` | Open the selected or newly created PR in the browser. |
 | `r` | Refresh the loaded pages. |
 | `q` | Close the popup, or cancel the active command and close. |
+| Right-click | Show PR actions, including commit and push when its worktree is open. |
 
-Right-click a PR for its actions, including commit and push when a matching worktree exists. From a dirty default branch, `p` asks for a branch and commit message, then creates the branch in the same worktree, commits, pushes, and opens a PR.
+### Publishing with `p`
+
+| Current worktree when pressing `p` | Result |
+| --- | --- |
+| Dirty default branch | Ask for a branch name and commit message, create the branch in this worktree, commit, push, and open a PR. The pane and agent session stay in place; shipr shows the PR URL and selects its row after refresh. |
+| Feature branch without an open PR | Commit any changes, push the branch, and open a PR. |
+| Branch with an open PR | Commit any changes and push to the PR's current head repository and branch. |
 
 For commits and pushes, shipr includes the current worktree's `.venv/bin` on `PATH` so Git hooks can find tools installed in that environment.
 
