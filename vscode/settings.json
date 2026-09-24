@@ -183,4 +183,5 @@
     "workbench.activityBar.location": "hidden",
     "workbench.startupEditor": "none",
     "workbench.iconTheme": "file-icons-colourless",
+    "security.workspace.trust.banner": "never",
 }

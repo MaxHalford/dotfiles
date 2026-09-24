@@ -15,6 +15,9 @@ keybind = super+g=unbind
 # Let Herdr handle Cmd+D for the review popup.
 keybind = super+d=unbind
 
+# Let Herdr handle Cmd+E for VS Code.
+keybind = super+e=unbind
+
 # Follow macOS appearance with Ghostty's bundled Rosé Pine themes.
 theme = light:Rose Pine Dawn,dark:Rose Pine Moon
 

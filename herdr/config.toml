@@ -31,3 +31,9 @@ key = "cmd+d"
 type = "plugin_action"
 command = "persiyanov.reviewr.toggle"
 description = "review changes and send comments to agent"
+
+[[keys.command]]
+key = "cmd+e"
+type = "shell"
+command = "/opt/homebrew/bin/code \"${HERDR_ACTIVE_PANE_CWD:-.}\""
+description = "open current code path in VS Code"
