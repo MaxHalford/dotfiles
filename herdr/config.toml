@@ -24,7 +24,7 @@ description = "open Mermaid preview"
 key = "cmd+g"
 type = "plugin_action"
 command = "dev.max.worktree-prs.open"
-description = "open Shipr"
+description = "open shipr"
 
 [[keys.command]]
 key = "cmd+d"

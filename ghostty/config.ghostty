@@ -9,7 +9,7 @@ keybind = alt+backspace=text:\x1b\x7f
 # Open the fzf-powered Zsh history search with Option+R.
 keybind = alt+r=text:\x12
 
-# Let Herdr handle Cmd+G for Shipr.
+# Let Herdr handle Cmd+G for shipr.
 keybind = super+g=unbind
 
 # Let Herdr handle Cmd+D for the review popup.

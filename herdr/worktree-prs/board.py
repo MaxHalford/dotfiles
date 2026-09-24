@@ -200,12 +200,12 @@ def menu_choice(menu, x, y):
 
 def draw_context_menu(window, menu):
     width = menu.width
-    window.addnstr(menu.y, menu.x, "+" + "-" * (width - 2) + "+", width, curses.A_BOLD)
+    window.addnstr(menu.y, menu.x, "┌" + "─" * (width - 2) + "┐", width, curses.A_BOLD)
     for index, (label, _) in enumerate(menu.actions, start=1):
-        window.addnstr(menu.y + index, menu.x, ("| " + label).ljust(width - 1) + "|",
+        window.addnstr(menu.y + index, menu.x, ("│ " + label).ljust(width - 1) + "│",
                        width, curses.A_REVERSE)
     window.addnstr(menu.y + len(menu.actions) + 1, menu.x,
-                   "+" + "-" * (width - 2) + "+", width, curses.A_BOLD)
+                   "└" + "─" * (width - 2) + "┘", width, curses.A_BOLD)
 
 
 def parse_worktrees(raw):
@@ -451,6 +451,18 @@ def draw_line(window, row, text, width, style=0):
     window.addnstr(row, 0, clean(text).ljust(max(0, width - 1)), max(0, width - 1), style)
 
 
+def feedback_style(message):
+    if message.startswith("✓"):
+        return curses.color_pair(1) | curses.A_BOLD
+    if message.startswith("✗"):
+        return curses.color_pair(3) | curses.A_BOLD
+    if message.startswith("!"):
+        return curses.color_pair(2)
+    if message.startswith("○"):
+        return curses.A_DIM
+    return 0
+
+
 def status_style(tree):
     if tree.unavailable or tree.pr_unavailable or not tree.pr:
         return curses.A_DIM
@@ -625,7 +637,7 @@ def main(window):
             refreshed = time.monotonic()
             if refresh_error:
                 if active_action is None and not message_persistent:
-                    message = f"Refresh failed: {refresh_error}"
+                    message = f"✗ Refresh failed: {refresh_error}"
             else:
                 chosen = str(trees[selected].path) if trees else ""
                 all_trees, error = result
@@ -633,7 +645,7 @@ def main(window):
                 menu = None
                 selected = next((i for i, tree in enumerate(trees) if str(tree.path) == chosen), 0)
                 if active_action is None and not message_persistent:
-                    message = error or f"Updated {time.strftime('%H:%M:%S')}"
+                    message = f"✗ {error}" if error else f"Updated {time.strftime('%H:%M:%S')}"
         if active_action is None and time.monotonic() - refreshed >= REFRESH_SECONDS:
             start_refresh()
         height, width = window.getmaxyx()
@@ -645,7 +657,7 @@ def main(window):
         window.erase()
         loading = "  refreshing..." if refreshing else ""
         mode = "all" if show_all else "relevant"
-        draw_line(window, 0, f"Shipr  {repo.name}  {len(trees)}/{len(all_trees)} {mode}  "
+        draw_line(window, 0, f"shipr  •  {repo.name}  •  {len(trees)}/{len(all_trees)} {mode}  "
                   f"({REFRESH_SECONDS}s refresh){loading}",
                   width, curses.A_BOLD)
         age_width = 11
@@ -667,13 +679,13 @@ def main(window):
         if active_action is None:
             toggle = "a relevant" if show_all else "a all"
             draw_line(window, height - 3,
-                      f"Right-click a row for actions  r refresh  {toggle}  q close", width)
-            detail = str(trees[selected].path) if trees else "No worktrees found"
+                      f"↑↓ select  right-click actions  r refresh  {toggle}  q close", width)
+            detail = f"{selected + 1}/{len(trees)}  {trees[selected].path}" if trees else "No worktrees found"
             draw_line(window, height - 2, detail, width)
-            draw_line(window, height - 1, message or error, width)
+            draw_line(window, height - 1, message or error, width, feedback_style(message or error))
         else:
             elapsed = int(time.monotonic() - action_started)
-            spinner = "|/-\\"[int((time.monotonic() - action_started) * 8) % 4]
+            spinner = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"[int((time.monotonic() - action_started) * 10) % 10]
             draw_line(window, height - 3, "q cancel and close after the current command stops", width)
             draw_line(window, height - 2, f"{spinner} {action_stage or 'Starting'}  {elapsed // 60:02d}:{elapsed % 60:02d}",
                       width, curses.A_BOLD)
@@ -704,7 +716,7 @@ def main(window):
                     selected = row_index
                     menu = context_menu(trees[selected], x, y, width, height)
                     if menu is None:
-                        message = "This worktree has no available actions"
+                        message = "! This worktree has no available actions"
                 else:
                     menu = None
                 continue
@@ -744,38 +756,38 @@ def main(window):
             tree = trees[selected]
             create_pr = action_id == "create_pr"
             if tree.unavailable or tree.branch == "(detached)":
-                message = "Select an available worktree with a branch"
+                message = "! Select an available worktree with a branch"
                 continue
             if create_pr and tree.pr and tree.pr.get("state") == "OPEN":
-                message = "This branch already has an open PR"
+                message = "! This branch already has an open PR"
                 continue
             if create_pr and tree.pr_unavailable:
-                message = "GitHub status is unavailable; refresh before creating a PR"
+                message = "! GitHub status is unavailable; refresh before creating a PR"
                 continue
             if create_pr:
                 verb = "create a branch and PR" if tree.is_base else "create a PR"
             else:
                 verb = "push"
             if not confirm(window, f"{verb} for {tree.branch}?"):
-                message = "Cancelled"
+                message = "○ Cancelled"
                 continue
             try:
                 dirty_now = has_changes(tree.path)
             except CommandError as exc:
-                message = f"Failed: {exc}"
+                message = f"✗ {exc}"
                 continue
             if create_pr and tree.is_base and not dirty_now:
-                message = "The default branch needs changes to create a PR"
+                message = "! The default branch needs changes to create a PR"
                 continue
             branch_name = None
             if create_pr and tree.is_base:
                 branch_name = prompt(window, "New branch name: ")
                 if not branch_name:
-                    message = "Cancelled: branch name required"
+                    message = "○ Cancelled: branch name required"
                     continue
             commit_message = prompt(window, "Commit message: ") if dirty_now else ""
             if dirty_now and not commit_message:
-                message = "Cancelled: commit message required"
+                message = "○ Cancelled: commit message required"
                 continue
             active_action = Operation(action_events)
             message_persistent = False
@@ -790,9 +802,10 @@ def main(window):
                                      branch_name=chosen_branch)
                 except Exception as exc:
                     summary = str(exc).splitlines()[-1] if str(exc) else type(exc).__name__
-                    action_events.put(("done", f"Failed: {summary}"))
+                    action_events.put(("done", f"✗ {summary}"))
                 else:
-                    action_events.put(("done", result))
+                    summary = f"PR created: {result}" if should_create else result
+                    action_events.put(("done", f"✓ {summary}"))
 
             threading.Thread(target=worker, daemon=True).start()
 
@@ -805,6 +818,6 @@ if __name__ == "__main__":
         if state:
             Path(state).mkdir(parents=True, exist_ok=True)
             (Path(state) / "board-error.log").write_text(traceback.format_exc())
-        print(f"Shipr: {error}")
+        print(f"shipr: {error}")
         if sys.stdin.isatty():
             input("Press Enter to close...")
