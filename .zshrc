@@ -4,6 +4,7 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 export GPG_TTY=$(tty)
+export CUA_REPL_ENABLED_SURFACES="all"
 
 # Oh-my-zsh
 export ZSH="$HOME/.oh-my-zsh"
@@ -93,12 +94,6 @@ compinit
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 alias claude='claude --enable-auto-mode'
-
-# Codex caches terminal colors at startup; use the terminal's default
-# background for its composer so macOS appearance changes remain readable.
-codex() {
-  FORCE_COLOR=1 command codex "$@"
-}
 
 # peon-ping quick controls
 alias peon="bash $HOME/.claude/hooks/peon-ping/peon.sh"
