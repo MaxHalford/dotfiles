@@ -36,6 +36,7 @@ SYMLINKS = [
     ("claude/settings.json", "~/.claude"),
     ("claude/statusline-command.sh", "~/.claude"),
     ("iterm2/com.max.iterm-clear-tab-color.plist", "~/Library/LaunchAgents"),
+    ("warcraft3/CustomKeys.txt", "~/Library/Application Support/Blizzard/Warcraft III/CustomKeyBindings"),
 ]
 
 LAUNCH_AGENTS = [
