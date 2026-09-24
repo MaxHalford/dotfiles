@@ -94,6 +94,12 @@ compinit
 
 alias claude='claude --enable-auto-mode'
 
+# Codex caches terminal colors at startup; use the terminal's default
+# background for its composer so macOS appearance changes remain readable.
+codex() {
+  FORCE_COLOR=1 command codex "$@"
+}
+
 # peon-ping quick controls
 alias peon="bash $HOME/.claude/hooks/peon-ping/peon.sh"
 [ -f "$HOME/.claude/hooks/peon-ping/completions.bash" ] && source "$HOME/.claude/hooks/peon-ping/completions.bash"

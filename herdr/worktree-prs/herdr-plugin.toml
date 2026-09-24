@@ -1,19 +1,19 @@
 id = "dev.max.worktree-prs"
-name = "Worktree pull requests"
+name = "Shipr"
 version = "0.1.0"
 min_herdr_version = "0.9.0"
-description = "Review and publish pull requests from the current repository's worktrees"
+description = "Commit, push, and publish pull requests from repository worktrees"
 platforms = ["macos"]
 
 [[actions]]
 id = "open"
-title = "Open worktree pull requests"
+title = "Open Shipr"
 contexts = ["workspace"]
 command = ["python3", "open.py"]
 
 [[panes]]
 id = "board"
-title = "Worktree pull requests"
+title = "Shipr"
 placement = "popup"
 width = "90%"
 height = "80%"

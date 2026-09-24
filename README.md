@@ -52,19 +52,11 @@ The script creates `~/dotfiles` as a stable link to this checkout and points
 installed config links through it. If you move the checkout, run the script
 again from its new location to update the anchor and installed links.
 
-The symlink script also installs the Ghostty configuration. It maps
-Option+Delete to backward word deletion and Option+R to fzf history search;
-Zsh maps Tab to normal completion. Ghostty follows the macOS appearance with
-its bundled Rosé Pine Dawn and Rosé Pine themes. Powerlevel10k uses their ANSI
-surface/text pair for readable segments in both modes.
+The symlink script also installs the Ghostty configuration. It maps Option+Delete to backward word deletion and Option+R to fzf history search; Zsh maps Tab to normal completion. Ghostty follows the macOS appearance with its bundled Rosé Pine Dawn and Rosé Pine Moon themes. Powerlevel10k uses their ANSI surface/text pair for readable segments in both modes.
 
-Herdr switches between its built-in Rosé Pine Dawn and Rosé Pine themes.
-Codex uses its own default terminal colors and syntax theme. In Codex 0.155.0,
-an open session keeps the terminal colors it detected at startup, so its prompt
-and diff backgrounds may lag after macOS changes appearance. Herdr 0.9.0 can
-also keep reporting the old terminal background to programs inside its panes.
-The symlink script installs `codex/AGENTS.md` as global Codex guidance at
-`~/.codex/AGENTS.md`; it points to the local `~/.codex/RTK.md` instructions.
+Herdr uses its `terminal` theme to follow Ghostty's palette. Ghostty uses Rosé Pine Dawn in light mode and Rosé Pine Moon in dark mode, matching VS Code's preferred themes.
+
+Codex CLI 0.156.1 caches its terminal colors at startup, so its prompt and diff backgrounds can lag after macOS changes appearance. The Zsh `codex` function starts Codex with `FORCE_COLOR=1`; this makes the prompt use the terminal's default background as it changes, at the cost of less detailed Codex colors. Restart an existing Codex session to apply the workaround. Herdr 0.9.1 can also keep reporting the old terminal background to programs inside its panes. The symlink script installs `codex/AGENTS.md` as global Codex guidance at `~/.codex/AGENTS.md`; it points to the local `~/.codex/RTK.md` instructions.
 
 Install or update the tracked Herdr plugins and agent integrations:
 
@@ -73,7 +65,12 @@ Install or update the tracked Herdr plugins and agent integrations:
 ```
 
 The Mermaid preview opens with `Ctrl+B`, then `m`.
-Open the worktree pull request popup with `Cmd+G`. It refreshes every 30 seconds without blocking input; select a worktree and press `c` to commit all changes, push, and create a PR, or `p` to commit all changes and push. If the worktree is clean, these actions use its existing commits. Enter a commit message when prompted; press `r` to refresh or `Esc`/`q` to close. PR statuses use green for open, yellow for pending checks or reviews, red for failing checks or requested changes, magenta for drafts, and blue for merged PRs.
+Press `Cmd+D` in Herdr to open Reviewr over the current tab. Click a changed file to browse its diff, then click or drag its line-number gutter to comment. Type the comment and press Enter to save it; press `s` to send the comments to the agent, or `q` to close the review. The view includes branch commits and uncommitted changes, and opens only when requested.
+After changing Ghostty keybindings in this checkout, press `Cmd+Shift+,` in Ghostty to reload them; Ghostty does not reload the file automatically.
+Open Shipr with `Cmd+G`. It refreshes every 30 seconds without blocking input. Right-click a worktree row to create a PR or push; if the worktree has changes, the selected action commits all changes first. Clean worktrees use their existing commits. During publishing, the popup shows the current step, elapsed time, and output from Git hooks and GitHub; `q` cancels the active command and closes when it stops. After cancelling, check Git status and PRs before retrying because earlier steps may have finished. Click empty space inside the popup, or press `q`, to close while idle. Press `r` to refresh. PR statuses use green for open, yellow for pending checks or reviews, red for failing checks or requested changes, magenta for drafts, and blue for merged PRs.
+Creating a PR from the repository's default branch prompts for a new branch name, then creates that branch, commits, pushes, and opens the PR. The default branch stays at its original commit. The confirmation prompt defaults to yes; press Enter to continue or `n` to cancel. In the text prompts, Backspace, Delete, Option+Delete, and the arrow keys work for editing.
+The first column shows the time since each worktree's last commit. By default, the table shows the current worktree and worktrees with changes, commits beyond the default branch, or an open PR. Press `a` to show all registered worktrees, including quiet or unavailable ones, and `a` again to restore the relevant view.
+Herdr 0.9.0 does not send clicks outside a plugin popup to the plugin, so closing by clicking beyond the popup border requires a Herdr change.
 
 For VSCode extensions:
 

@@ -1,10 +1,7 @@
 onboarding = false
 
 [theme]
-name = "rose-pine"
-auto_switch = true
-light_name = "rose-pine-dawn"
-dark_name = "rose-pine"
+name = "terminal"
 
 [terminal]
 default_shell = "/bin/zsh"
@@ -27,4 +24,10 @@ description = "open Mermaid preview"
 key = "cmd+g"
 type = "plugin_action"
 command = "dev.max.worktree-prs.open"
-description = "browse worktree pull requests"
+description = "open Shipr"
+
+[[keys.command]]
+key = "cmd+d"
+type = "plugin_action"
+command = "persiyanov.reviewr.toggle"
+description = "review changes and send comments to agent"

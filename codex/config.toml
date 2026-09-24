@@ -5,6 +5,7 @@ notify = ["/Users/max/.codex/computer-use/Codex Computer Use.app/Contents/Shared
 file_opener = "vscode"
 model = "gpt-6-sol"
 model_reasoning_effort = "high"
+service_tier = "default"
 
 [marketplaces.openai-bundled]
 source_type = "local"
