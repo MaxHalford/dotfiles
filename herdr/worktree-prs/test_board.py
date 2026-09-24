@@ -291,11 +291,26 @@ class BoardTests(unittest.TestCase):
         self.assertIsNone(board.menu_choice(menu, menu.x - 1, menu.y + 1))
 
     def test_context_menu_hides_create_pr_when_one_is_open_or_status_is_unknown(self):
-        open_pr = board.Worktree(Path("/tmp/feature"), "feature/a", pr={"state": "OPEN"})
+        open_pr = board.Worktree(Path("/tmp/feature"), "feature/a", pr={
+            "state": "OPEN", "number": 42, "url": "https://github.com/example/repo/pull/42"
+        })
         unknown = board.Worktree(Path("/tmp/feature"), "feature/a", pr_unavailable=True)
-        self.assertEqual(board.context_actions(open_pr), [("Push", "push")])
+        self.assertEqual(board.context_actions(open_pr),
+                         [("Open PR in GitHub", "open_pr"), ("Push", "push")])
+        menu = board.context_menu(open_pr, 30, 8, 80, 20)
+        self.assertEqual(board.menu_choice(menu, menu.x + 2, menu.y + 1),
+                         ("Open PR in GitHub", "open_pr"))
         self.assertEqual(board.context_actions(unknown), [("Push", "push")])
         self.assertEqual(board.context_actions(board.Worktree(Path("/tmp/feature"), "(detached)")), [])
+
+    def test_open_pr_uses_the_selected_pr_url(self):
+        tree = board.Worktree(Path("/tmp/feature"), "feature/a", pr={
+            "state": "OPEN", "url": "https://github.com/example/repo/pull/42"
+        })
+        with mock.patch.object(board, "run") as command:
+            board.open_pr(tree)
+        command.assert_called_once_with(["open", "https://github.com/example/repo/pull/42"],
+                                        cwd=tree.path)
 
     def test_context_menu_labels_default_branch_creation(self):
         main = board.Worktree(Path("/tmp/main"), "main", dirty=True, is_base=True)
