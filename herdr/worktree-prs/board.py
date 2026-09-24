@@ -4,21 +4,30 @@ import curses
 import os
 import queue
 import re
+import subprocess
 import sys
 import threading
 import time
 import traceback
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 from shipr_core import (
-    CommandError, Operation, PullRequest, checkout_pr, clean, has_changes, load_board,
+    CommandError, Operation, PullRequest, checkout_pr, clean, current_branch_pr,
+    find_pr_worktree, has_changes, load_board,
     open_herdr_worktree, open_pr, pr_status, publish, publish_from_main, repository_directory,
     run, update_pr,
 )
 
 
-REFRESH_SECONDS = 30
+REFRESH_SECONDS = 60
+AGE_WIDTH = 11
+PR_WIDTH = 7
+STATUS_WIDTH = 18
+CI_WIDTH = 9
+MIN_DIFF_WIDTH = 11
+MIN_TITLE_WIDTH = 30
 
 
 @dataclass
@@ -84,20 +93,129 @@ def feedback_style(message):
     return 0
 
 
-def status_style(tree):
+def status_style(tree, striped=False):
     pr = tree.pr
     if pr.get("reviewDecision") == "CHANGES_REQUESTED":
-        return curses.color_pair(3)
+        pair = 3
+    elif pr.get("isDraft"):
+        pair = 5
+    elif pr.get("reviewDecision") == "REVIEW_REQUIRED":
+        pair = 2
+    else:
+        pair = 1
+    return curses.color_pair(pair + 6 if striped else pair)
+
+
+def diff_count(value, sign):
+    return f"{sign}{value:,}" if isinstance(value, int) and value >= 0 else "—"
+
+
+def commit_time(pr):
+    value = pr.get("lastCommitAt")
+    if not value:
+        return 0
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+    except (ValueError, AttributeError):
+        return 0
+
+
+def commit_age(pr, now=None):
+    timestamp = commit_time(pr)
+    if not timestamp:
+        return "—"
+    elapsed = max(0, int((time.time() if now is None else now) - timestamp))
+    if elapsed < 60:
+        return "just now"
+    if elapsed < 3600:
+        return f"{elapsed // 60}m ago"
+    if elapsed < 86400:
+        return f"{elapsed // 3600}h ago"
+    if elapsed < 14 * 86400:
+        return f"{elapsed // 86400}d ago"
+    if elapsed < 60 * 86400:
+        return f"{elapsed // (7 * 86400)}w ago"
+    if elapsed < 365 * 86400:
+        return f"{elapsed // (30 * 86400)}mo ago"
+    return f"{elapsed // (365 * 86400)}y ago"
+
+
+def sort_prs(items):
+    return sorted(items, key=lambda item: (commit_time(item.pr), item.pr.get("number", 0)),
+                  reverse=True)
+
+
+def table_status(pr):
+    review = pr.get("reviewDecision")
     if pr.get("isDraft"):
-        return curses.color_pair(5)
-    if pr.get("reviewDecision") == "REVIEW_REQUIRED":
-        return curses.color_pair(2)
-    return curses.color_pair(1)
+        if review == "CHANGES_REQUESTED":
+            return "Draft / changes"
+        if review == "REVIEW_REQUIRED":
+            return "Draft / review"
+        return "Draft"
+    if review == "CHANGES_REQUESTED":
+        return "Changes requested"
+    if review == "REVIEW_REQUIRED":
+        return "Review needed"
+    return pr_status(pr)
+
+
+def ci_status(pr):
+    checks = pr.get("statusCheckRollup")
+    if checks is None:
+        return "—", 0
+    if not isinstance(checks, list):
+        return "Unknown", 2
+    if not checks:
+        return "No checks", 0
+    states = set()
+    for check in checks:
+        if not isinstance(check, dict):
+            states.add("unknown")
+            continue
+        status = check.get("status")
+        conclusion = check.get("conclusion")
+        state = check.get("state")
+        if status and status != "COMPLETED":
+            states.add("pending")
+        elif (conclusion in ("FAILURE", "TIMED_OUT", "STARTUP_FAILURE", "ACTION_REQUIRED", "STALE")
+              or state in ("FAILURE", "ERROR")):
+            states.add("failing")
+        elif state in ("PENDING", "EXPECTED"):
+            states.add("pending")
+        elif conclusion == "CANCELLED":
+            states.add("cancelled")
+        elif conclusion in ("SUCCESS",) or state == "SUCCESS":
+            states.add("passing")
+        elif conclusion in ("NEUTRAL", "SKIPPED"):
+            states.add("skipped")
+        else:
+            states.add("unknown")
+    for state, label, color in (("failing", "Failing", 3),
+                                ("pending", "Pending", 2),
+                                ("cancelled", "Cancelled", 2),
+                                ("unknown", "Unknown", 2),
+                                ("passing", "Passing", 1),
+                                ("skipped", "Skipped", 2)):
+        if state in states:
+            return label, color
+    return "Unknown", 2
+
+
+def stripe_background():
+    if sys.platform != "darwin":
+        return 236
+    try:
+        appearance = subprocess.run(["defaults", "read", "-g", "AppleInterfaceStyle"],
+                                    capture_output=True, text=True, timeout=1)
+    except (OSError, subprocess.TimeoutExpired):
+        return 236
+    return 236 if appearance.returncode == 0 and appearance.stdout.strip() == "Dark" else 254
 
 
 def init_colors():
     if not curses.has_colors():
-        return
+        return False
     curses.start_color()
     try:
         curses.use_default_colors()
@@ -109,6 +227,18 @@ def init_colors():
                         (3, curses.COLOR_RED), (4, curses.COLOR_BLUE),
                         (5, curses.COLOR_MAGENTA)):
         curses.init_pair(pair, color, background)
+    if background != -1 or curses.COLORS < 256 or curses.COLOR_PAIRS < 12:
+        return False
+    try:
+        gray = stripe_background()
+        curses.init_pair(6, -1, gray)
+        for pair, color in ((1, curses.COLOR_GREEN), (2, curses.COLOR_YELLOW),
+                            (3, curses.COLOR_RED), (4, curses.COLOR_BLUE),
+                            (5, curses.COLOR_MAGENTA)):
+            curses.init_pair(pair + 6, color, gray)
+    except curses.error:
+        return False
+    return True
 
 
 def prompt(window, label):
@@ -176,9 +306,10 @@ def confirm(window, label):
 
 
 class ShiprApp:
-    def __init__(self, window, repo):
+    def __init__(self, window, repo, stripe_colors=False):
         self.window = window
         self.repo = repo
+        self.stripe_colors = stripe_colors
         self.items = []
         self.current_tree = None
         self.error = ""
@@ -189,8 +320,14 @@ class ShiprApp:
         self.message_persistent = False
         self.menu = None
         self.updates = queue.Queue(maxsize=1)
+        self.page_updates = queue.Queue(maxsize=1)
         self.action_events = queue.Queue(maxsize=128)
         self.refreshing = False
+        self.loading_more = False
+        self.refresh_pending = False
+        self.next_cursor = None
+        self.total_count = 0
+        self.loaded_pages = 1
         self.active_action = None
         self.action_stage = ""
         self.action_line = ""
@@ -206,21 +343,46 @@ class ShiprApp:
     def selected_item(self):
         return self.items[self.selected] if self.items else None
 
+    def resolve_worktree(self, item):
+        item.worktree = find_pr_worktree(item, [other.pr for other in self.items])
+        return item.worktree
+
     def select_key(self, key):
         self.selected = next((i for i, item in enumerate(self.items) if self.item_key(item) == key), 0)
 
     def start_refresh(self):
         if self.refreshing:
             return
+        if self.loading_more:
+            self.refresh_pending = True
+            return
         self.refreshing = True
 
         def worker():
             try:
-                self.updates.put((load_board(self.repo), None))
+                self.updates.put((load_board(self.repo, pages=self.loaded_pages), None))
             except Exception as exc:
                 self.updates.put((None, str(exc)))
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def start_load_more(self):
+        if not self.next_cursor or self.loading_more or self.refreshing or self.active_action:
+            return
+        self.loading_more = True
+        cursor = self.next_cursor
+
+        def worker():
+            try:
+                self.page_updates.put((load_board(self.repo, cursor=cursor), None))
+            except Exception as exc:
+                self.page_updates.put((None, str(exc)))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def maybe_load_more(self):
+        if self.items and self.selected >= len(self.items) - 4:
+            self.start_load_more()
 
     def receive_refresh(self):
         try:
@@ -235,7 +397,16 @@ class ShiprApp:
             return
         selected = self.selected_item()
         key = self.item_key(selected) if selected else None
-        self.items, self.current_tree, self.error = result
+        self.current_tree = result.current
+        self.error = result.error
+        if result.error and self.items:
+            if self.active_action is None and not self.message_persistent:
+                self.message = f"✗ {result.error}"
+            return
+        self.items = sort_prs(result.items)
+        self.next_cursor = result.next_cursor
+        self.total_count = result.total_count
+        self.loaded_pages = max(1, result.pages_loaded)
         self.menu = None
         if self.pending_pr_number and any(item.pr.get("number") == self.pending_pr_number for item in self.items):
             self.select_key(self.pending_pr_number)
@@ -244,6 +415,32 @@ class ShiprApp:
             self.select_key(key)
         if self.active_action is None and not self.message_persistent:
             self.message = f"✗ {self.error}" if self.error else f"Updated {time.strftime('%H:%M:%S')}"
+
+    def receive_more(self):
+        try:
+            result, failure = self.page_updates.get_nowait()
+        except queue.Empty:
+            return
+        self.loading_more = False
+        if failure or result.error:
+            self.next_cursor = None
+            self.message = f"✗ Load more failed: {failure or result.error} • press r to retry"
+            self.message_persistent = False
+        else:
+            selected = self.selected_item()
+            key = self.item_key(selected) if selected else None
+            merged = {self.item_key(item): item for item in self.items}
+            merged.update((self.item_key(item), item) for item in result.items)
+            self.items = sort_prs(list(merged.values()))
+            self.next_cursor = result.next_cursor
+            self.total_count = result.total_count
+            self.loaded_pages += result.pages_loaded
+            self.select_key(key)
+            if not self.message_persistent:
+                self.message = f"Loaded {len(self.items)} of {self.total_count} open PRs"
+        if self.refresh_pending:
+            self.refresh_pending = False
+            self.start_refresh()
 
     def receive_actions(self):
         for _ in range(128):
@@ -281,16 +478,43 @@ class ShiprApp:
                 self.start_refresh()
         return False
 
-    def draw_row(self, row, item, branch_width, path_width, width):
-        selected_style = curses.A_REVERSE if row - 2 + self.offset == self.selected else 0
-        local = item.worktree.name if item.worktree else "—"
-        prefix = f"#{item.pr['number']:<6} {item.branch:<{branch_width}.{branch_width}} "
-        prefix += f"{local:<{path_width}.{path_width}} {pr_status(item.pr):<24.24} "
-        status = item.pr.get("title") or "(untitled)"
-        draw_line(self.window, row, prefix + status, width, selected_style)
-        if len(prefix) < width - 1:
-            self.window.addnstr(row, len(prefix), clean(status), width - len(prefix) - 1,
-                                selected_style | status_style(item))
+    def draw_row(self, row, item, branch_width, diff_width, width):
+        index = row - 2 + self.offset
+        selected = index == self.selected
+        striped = index % 2 == 1 and self.stripe_colors and not selected
+        row_style = (curses.A_REVERSE | curses.A_BOLD if selected else
+                     curses.color_pair(6) if striped else
+                     curses.A_DIM if index % 2 else 0)
+        age = f"{commit_age(item.pr):<{AGE_WIDTH}.{AGE_WIDTH}}"
+        number = f"#{item.pr['number']:<{PR_WIDTH - 1}}"
+        branch = f"{item.branch:<{branch_width}.{branch_width}}"
+        status = f"{table_status(item.pr):<{STATUS_WIDTH}.{STATUS_WIDTH}}"
+        ci_label, ci_color = ci_status(item.pr)
+        ci = f"{ci_label:<{CI_WIDTH}}"
+        additions = diff_count(item.pr.get("additions"), "+")
+        deletions = diff_count(item.pr.get("deletions"), "-")
+        diff = f"{additions} / {deletions}"
+        title = item.pr.get("title") or "(untitled)"
+        green = curses.color_pair(7 if striped else 1)
+        red = curses.color_pair(9 if striped else 3)
+        segments = ((age, None), (" ", None), (number, None), (" ", None),
+                    (branch, None), (" ", None),
+                    (status, status_style(item, striped)), (" ", None),
+                    (ci, curses.color_pair(ci_color + 6 if striped else ci_color)
+                     if ci_color else None), (" ", None),
+                    (" " * max(0, diff_width - len(diff)), None),
+                    (additions, green if isinstance(item.pr.get("additions"), int) else None),
+                    (" / ", None),
+                    (deletions, red if isinstance(item.pr.get("deletions"), int) else None),
+                    (" ", None), (title, None))
+        draw_line(self.window, row, "".join(value for value, _ in segments), width, row_style)
+        if selected:
+            return
+        column = 0
+        for value, style in segments:
+            if style is not None and column < width - 1:
+                self.window.addnstr(row, column, clean(value), width - column - 1, style)
+            column += len(value)
 
     def draw(self):
         window = self.window
@@ -301,23 +525,32 @@ class ShiprApp:
         if self.selected >= self.offset + visible:
             self.offset = self.selected - visible + 1
         window.erase()
-        loading = "  refreshing..." if self.refreshing else ""
-        draw_line(window, 0, f"shipr  •  {self.repo.name}  •  {len(self.items)} open PRs  "
-                  f"({REFRESH_SECONDS}s refresh){loading}", width, curses.A_BOLD)
-        branch_width = max(12, (width - 66) // 3)
-        path_width = max(12, (width - 66) // 3)
-        header = f"{'PR':<7} {'BRANCH':<{branch_width}} {'WORKTREE':<{path_width}} {'STATUS':<24} TITLE"
+        count = (f"{len(self.items)}/{self.total_count}" if self.total_count > len(self.items) else
+                 str(self.total_count or len(self.items)))
+        loading = "  loading more..." if self.loading_more else "  refreshing..." if self.refreshing else ""
+        more = "  ↓ more" if self.next_cursor and not self.loading_more else ""
+        draw_line(window, 0, f"shipr  •  {self.repo.name}  •  {count} open PRs  "
+                  f"({REFRESH_SECONDS}s refresh){more}{loading}", width, curses.A_BOLD)
+        diff_width = max(MIN_DIFF_WIDTH,
+                         max((len(diff_count(item.pr.get("additions"), "+")) + 3 +
+                              len(diff_count(item.pr.get("deletions"), "-"))
+                              for item in self.items), default=0))
+        fixed_width = AGE_WIDTH + PR_WIDTH + STATUS_WIDTH + CI_WIDTH + diff_width + 6
+        branch_width = max(8, min(28, width - 1 - fixed_width - MIN_TITLE_WIDTH))
+        header = (f"{'LAST COMMIT':<{AGE_WIDTH}} {'PR':<{PR_WIDTH}} "
+                  f"{'BRANCH':<{branch_width}} {'STATUS':<{STATUS_WIDTH}} {'CI':<{CI_WIDTH}} "
+                  f"{'DIFF':>{diff_width}} TITLE")
         draw_line(window, 1, header, width, curses.A_UNDERLINE)
         for row, item in enumerate(self.items[self.offset:self.offset + visible], start=2):
-            self.draw_row(row, item, branch_width, path_width, width)
+            self.draw_row(row, item, branch_width, diff_width, width)
         if self.active_action is None:
             draw_line(window, height - 3,
-                      "↑↓ select  right-click PR  p publish/push current  o open PR  r refresh  q close", width)
+                      "↑↓/PgDn select  Enter worktree  p publish/push  o open PR  r refresh  q close", width)
             item = self.selected_item()
             if self.created_pr_url:
                 detail = f"PR URL: {self.created_pr_url}"
             elif item:
-                detail = f"PR #{item.pr['number']}  {item.pr.get('title', '')}  {item.worktree or 'not checked out'}"
+                detail = f"PR URL: {item.pr.get('url') or 'unavailable'}"
             else:
                 detail = "No open PRs. Press p to publish changes from this worktree."
             draw_line(window, height - 2, detail, width)
@@ -344,10 +577,17 @@ class ShiprApp:
         row_index = self.offset + y - 2
         on_row = 2 <= y < 2 + max(1, height - 5) and 0 <= row_index < len(self.items)
         if buttons & (curses.BUTTON3_PRESSED | curses.BUTTON3_CLICKED):
-            self.menu = context_menu(self.items[row_index], x, y, width, height) if on_row else None
             if on_row:
                 self.created_pr_url = ""
                 self.selected = row_index
+                try:
+                    self.resolve_worktree(self.items[row_index])
+                except CommandError as exc:
+                    self.menu = None
+                    self.message = f"✗ {exc}"
+                    return None, False
+            self.menu = context_menu(self.items[row_index], x, y, width, height) if on_row else None
+            if on_row:
                 if self.menu is None:
                     self.message = "! This row has no available actions"
             return None, False
@@ -359,6 +599,7 @@ class ShiprApp:
             if on_row:
                 self.created_pr_url = ""
                 self.selected = row_index
+                self.maybe_load_more()
         return None, False
 
     def start_action(self, work, success):
@@ -388,6 +629,12 @@ class ShiprApp:
         if tree.pr_unavailable:
             self.message = "! GitHub status is unavailable; refresh before publishing or pushing"
             return
+        if tree.pr is None and not tree.is_base:
+            try:
+                tree.pr = current_branch_pr(self.repo, tree.branch)
+            except (CommandError, ValueError) as exc:
+                self.message = f"✗ Current-branch PR lookup failed: {exc}"
+                return
         create_pr = not (tree.pr and tree.pr.get("state") == "OPEN")
         from_main = create_pr and tree.is_base
         verb = ("create a branch here and open a PR" if from_main else "create a PR" if create_pr
@@ -423,6 +670,11 @@ class ShiprApp:
             )
 
     def update_pr_action(self, item):
+        try:
+            self.resolve_worktree(item)
+        except CommandError as exc:
+            self.message = f"✗ {exc}"
+            return
         if item.worktree is None:
             self.message = "! Open this PR in a Herdr worktree before pushing"
             return
@@ -493,10 +745,30 @@ class ShiprApp:
             self.menu = None
             self.created_pr_url = ""
             self.selected = min(self.selected + 1, max(0, len(self.items) - 1))
+            self.maybe_load_more()
         elif key in (curses.KEY_UP, ord("k")):
             self.menu = None
             self.created_pr_url = ""
             self.selected = max(0, self.selected - 1)
+        elif key == curses.KEY_NPAGE:
+            self.menu = None
+            self.created_pr_url = ""
+            self.selected = min(self.selected + max(1, self.window.getmaxyx()[0] - 5),
+                                max(0, len(self.items) - 1))
+            self.maybe_load_more()
+        elif key == curses.KEY_PPAGE:
+            self.menu = None
+            self.created_pr_url = ""
+            self.selected = max(0, self.selected - max(1, self.window.getmaxyx()[0] - 5))
+        elif key == curses.KEY_END:
+            self.menu = None
+            self.created_pr_url = ""
+            self.selected = max(0, len(self.items) - 1)
+            self.maybe_load_more()
+        elif key == curses.KEY_HOME:
+            self.menu = None
+            self.created_pr_url = ""
+            self.selected = 0
         elif key == ord("r"):
             self.menu = None
             self.start_refresh()
@@ -516,6 +788,16 @@ class ShiprApp:
                     self.message = "✓ Opened PR in GitHub"
             elif self.selected_item():
                 return self.handle_action("open_pr")
+        elif key in (10, 13, curses.KEY_ENTER):
+            self.menu = None
+            item = self.selected_item()
+            if item:
+                try:
+                    self.resolve_worktree(item)
+                except CommandError as exc:
+                    self.message = f"✗ {exc}"
+                    return False
+                return self.handle_action("focus_worktree" if item.worktree else "checkout_pr")
         elif action is not None:
             return self.handle_action(action[1])
         return False
@@ -526,6 +808,7 @@ class ShiprApp:
             if self.receive_actions():
                 return
             self.receive_refresh()
+            self.receive_more()
             if self.active_action is None and time.monotonic() - self.refreshed >= REFRESH_SECONDS:
                 self.start_refresh()
             self.draw()
@@ -539,10 +822,10 @@ def main(window):
     curses.mouseinterval(0)
     curses.mousemask(curses.BUTTON1_PRESSED | curses.BUTTON1_CLICKED |
                      curses.BUTTON3_PRESSED | curses.BUTTON3_CLICKED)
-    init_colors()
+    stripe_colors = init_colors()
     window.keypad(True)
     window.timeout(100)
-    ShiprApp(window, repository_directory()).run()
+    ShiprApp(window, repository_directory(), stripe_colors).run()
 
 
 if __name__ == "__main__":

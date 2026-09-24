@@ -8,6 +8,7 @@ platforms = ["macos"]
 [[actions]]
 id = "open"
 title = "Open shipr"
+description = "Browse and work with GitHub pull requests in this workspace"
 contexts = ["workspace"]
 command = ["python3", "open.py"]
 

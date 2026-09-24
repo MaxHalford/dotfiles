@@ -42,14 +42,20 @@ class ShiprTests(unittest.TestCase):
         self.assertIsNone(core.matching_pr(prs, "feature"))
         self.assertEqual(core.matching_pr(prs, "shipr/pr-2-abcdef1234"), prs[1])
         self.assertEqual(core.matching_pr(prs, "shipr/pr-2-abcdef1234-2"), prs[1])
-        rows = core.pull_request_rows(Path("/tmp/project"), prs, [
-            core.Worktree(Path("/tmp/feature"), "feature"),
-            core.Worktree(Path("/tmp/pr-two"), "shipr/pr-2-abcdef1234"),
-        ])
-        self.assertIsNone(rows[0].worktree)
-        self.assertEqual(rows[1].worktree, Path("/tmp/pr-two"))
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            feature = root / "feature"
+            pr_two = root / "pr-two"
+            feature.mkdir()
+            pr_two.mkdir()
+            raw = (f"worktree {feature}\0branch refs/heads/feature\0\0"
+                   f"worktree {pr_two}\0branch refs/heads/shipr/pr-2-abcdef1234\0\0")
+            rows = [core.PullRequest(root, pr) for pr in prs]
+            with mock.patch.object(core, "run", return_value=raw):
+                self.assertIsNone(core.find_pr_worktree(rows[0], prs))
+                self.assertEqual(core.find_pr_worktree(rows[1], prs), pr_two)
 
-    def test_board_lists_only_prs_and_tracks_the_originating_worktree(self):
+    def test_board_loads_prs_without_looking_up_every_worktree(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             checkout = repository(root)
@@ -57,29 +63,215 @@ class ShiprTests(unittest.TestCase):
             git("worktree", "add", "-b", "feature", str(feature), "main", cwd=checkout)
             (feature / "change.txt").write_text("change\n")
             original_run = core.run
+            commands = []
 
             def run_with_prs(argv, **kwargs):
-                if argv[:3] == ["gh", "pr", "list"]:
-                    self.assertEqual(argv[3:7], ["--state", "open", "--limit", "50"])
-                    return json.dumps([
-                        {"number": 12, "headRefName": "feature", "state": "OPEN", "title": "Local"},
-                        {"number": 13, "headRefName": "remote", "state": "OPEN", "title": "Remote"},
-                    ])
+                commands.append(argv)
+                if argv[:3] == ["gh", "repo", "view"]:
+                    return json.dumps({"nameWithOwner": "owner/project",
+                                       "url": "https://github.com/owner/project"})
+                if argv[:3] == ["gh", "api", "graphql"]:
+                    self.assertIn("first=25", argv)
+                    self.assertIn("commits(last: 1)", argv[argv.index("-f") + 1])
+                    return json.dumps({"data": {"repository": {"pullRequests": {
+                        "nodes": [
+                            {"number": 12, "headRefName": "feature", "state": "OPEN",
+                             "title": "Local", "commits": {"nodes": [{"commit": {
+                                 "committedDate": "2026-09-25T12:00:00Z",
+                                 "statusCheckRollup": {"state": "SUCCESS"}}}]}},
+                            {"number": 13, "headRefName": "remote", "state": "OPEN",
+                             "title": "Remote", "commits": {"nodes": []}},
+                        ], "pageInfo": {"endCursor": None, "hasNextPage": False},
+                        "totalCount": 2}}}})
                 return original_run(argv, **kwargs)
 
             with mock.patch.object(core, "run", side_effect=run_with_prs):
-                rows, current, error = core.load_board(feature)
-            self.assertEqual(error, "")
+                page = core.load_board(feature)
+            rows, current = page.items, page.current
+            self.assertEqual(page.error, "")
             self.assertEqual([row.pr["number"] for row in rows], [12, 13])
-            self.assertEqual(rows[0].worktree.resolve(), feature.resolve())
+            self.assertEqual(page.total_count, 2)
+            self.assertEqual(rows[0].pr["lastCommitAt"], "2026-09-25T12:00:00Z")
+            self.assertEqual(rows[0].pr["statusCheckRollup"], [{"state": "SUCCESS"}])
+            self.assertIsNone(rows[0].worktree)
             self.assertIsNone(rows[1].worktree)
+            self.assertFalse(any(argv[:3] == ["git", "worktree", "list"] for argv in commands))
+            self.assertEqual(core.find_pr_worktree(rows[0], [row.pr for row in rows]).resolve(),
+                             feature.resolve())
             self.assertEqual(current.branch, "feature")
             self.assertTrue(current.dirty)
             self.assertEqual(current.pr["number"], 12)
+            rows[0].worktree = feature
             self.assertEqual(board.context_actions(rows[0])[-1],
                              ("Commit & push to PR", "update_pr"))
             self.assertEqual(board.context_actions(rows[1])[-1],
                              ("Open in new Herdr worktree", "checkout_pr"))
+
+    def test_pr_page_uses_a_cursor_and_normalizes_head_commit(self):
+        response = {"data": {"repository": {"pullRequests": {
+            "nodes": [{"number": 7, "state": "OPEN", "commits": {"nodes": [{"commit": {
+                "committedDate": "2026-09-25T12:00:00Z",
+                "statusCheckRollup": {"state": "PENDING"}}}]}}],
+            "pageInfo": {"endCursor": "next-page", "hasNextPage": True},
+            "totalCount": 70}}}}
+        with mock.patch.object(core, "github_repository", return_value=("owner", "project", "github.com")), \
+             mock.patch.object(core, "run", return_value=json.dumps(response)) as command:
+            prs, cursor, total, error = core.load_open_prs(Path("/tmp/project"), "first-page")
+        self.assertEqual((cursor, total, error), ("next-page", 70, ""))
+        self.assertEqual(prs[0]["lastCommitAt"], "2026-09-25T12:00:00Z")
+        self.assertEqual(prs[0]["statusCheckRollup"], [{"state": "PENDING"}])
+        argv = command.call_args.args[0]
+        self.assertIn("first=25", argv)
+        self.assertIn("after=first-page", argv)
+        self.assertNotIn("contexts", argv[argv.index("-f") + 1])
+
+    def test_github_repository_uses_local_origin_without_an_api_call(self):
+        repo = Path("/tmp/project")
+        with mock.patch.dict(os.environ, {"GH_REPO": "", "GH_HOST": ""}), \
+             mock.patch.object(core, "run", return_value="git@github.com:owner/project.git\n") as command:
+            self.assertEqual(core.github_repository.__wrapped__(repo),
+                             ("owner", "project", "github.com"))
+        command.assert_called_once_with(["git", "remote", "get-url", "origin"], cwd=repo)
+
+    def test_current_branch_pr_is_checked_only_when_p_is_pressed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            checkout = repository(root)
+            feature = root / "feature"
+            git("worktree", "add", "-b", "feature", str(feature), "main", cwd=checkout)
+            prs = [{"number": number, "state": "OPEN", "headRefName": f"other-{number}"}
+                   for number in range(1, 26)]
+            with mock.patch.object(core, "load_open_prs", return_value=(prs, "page-two", 50, "")), \
+                 mock.patch.object(core, "current_branch_pr") as lookup:
+                page = core.load_board(feature)
+            lookup.assert_not_called()
+            self.assertIsNone(page.current.pr)
+            self.assertEqual(page.next_cursor, "page-two")
+            self.assertEqual(len(page.items), 25)
+            app = board.ShiprApp(mock.Mock(), feature)
+            with mock.patch.object(board, "current_branch_pr", return_value={
+                    "number": 49, "state": "OPEN", "headRefName": "feature"}) as lookup, \
+                 mock.patch.object(board, "confirm", return_value=False) as confirm:
+                app.publish_action(page.current)
+            lookup.assert_called_once_with(feature, "feature")
+            self.assertEqual(page.current.pr["number"], 49)
+            self.assertIn("push to PR #49", confirm.call_args.args[1])
+
+    def test_refresh_fetches_only_the_pages_already_loaded(self):
+        with tempfile.TemporaryDirectory() as directory:
+            checkout = repository(Path(directory))
+            first = [{"number": number, "state": "OPEN", "headRefName": f"branch-{number}"}
+                     for number in range(1, 26)]
+            second = [{"number": number, "state": "OPEN", "headRefName": f"branch-{number}"}
+                      for number in range(26, 31)]
+            with mock.patch.object(core, "load_open_prs", side_effect=[
+                    (first, "page-two", 30, ""), (second, None, 30, "")]) as load:
+                page = core.load_board(checkout, pages=2)
+            self.assertEqual([call.args[1] for call in load.call_args_list], [None, "page-two"])
+            self.assertEqual(len(page.items), 30)
+            self.assertEqual(page.total_count, 30)
+            self.assertIsNone(page.next_cursor)
+
+    def test_scroll_fetches_next_page_and_preserves_selection(self):
+        repo = Path("/tmp/project")
+        window = mock.Mock()
+        window.getmaxyx.return_value = (16, 110)
+        app = board.ShiprApp(window, repo)
+        app.items = [core.PullRequest(repo, {"number": number, "state": "OPEN",
+                                                 "lastCommitAt": f"2026-09-{25 - number:02d}T12:00:00Z"})
+                     for number in range(1, 26)]
+        app.selected = 23
+        app.next_cursor = "page-two"
+        app.total_count = 50
+        older = [core.PullRequest(repo, {"number": number, "state": "OPEN",
+                                          "lastCommitAt": "2026-08-01T12:00:00Z"})
+                 for number in range(26, 51)]
+        with mock.patch.object(board, "load_board", return_value=core.BoardPage(
+                older, core.Worktree(repo, "main"), None, 50)) as load:
+            app.handle_key(board.curses.KEY_DOWN)
+            update = app.page_updates.get(timeout=2)
+            app.page_updates.put(update)
+        app.receive_more()
+        load.assert_called_once_with(repo, cursor="page-two")
+        self.assertEqual(len(app.items), 50)
+        self.assertEqual(app.selected_item().pr["number"], 25)
+        self.assertIsNone(app.next_cursor)
+
+    def test_last_commit_age_and_sort_order(self):
+        repo = Path("/tmp/project")
+        newer = core.PullRequest(repo, {"number": 2, "lastCommitAt": "2026-09-25T12:00:00Z"})
+        older = core.PullRequest(repo, {"number": 1, "lastCommitAt": "2026-09-24T12:00:00Z"})
+        self.assertEqual(board.sort_prs([older, newer]), [newer, older])
+        self.assertEqual(board.commit_age(newer.pr, board.commit_time(newer.pr) + 3600), "1h ago")
+
+    def test_pr_table_shows_colored_diffs_and_alternating_rows(self):
+        window = mock.Mock()
+        window.getmaxyx.return_value = (10, 110)
+        app = board.ShiprApp(window, Path("/tmp/project"), stripe_colors=True)
+        app.items = [
+            core.PullRequest(app.repo, {"number": 1, "state": "OPEN", "title": "First",
+                                           "headRefName": "first", "additions": 0, "deletions": 2,
+                                           "url": "https://github.com/o/r/pull/1",
+                                           "statusCheckRollup": [
+                                               {"status": "COMPLETED", "conclusion": "SUCCESS"}]}),
+            core.PullRequest(app.repo, {"number": 2, "state": "OPEN", "title": "Second",
+                                           "headRefName": "second", "additions": 1234567,
+                                           "deletions": 56, "statusCheckRollup": [
+                                               {"state": "FAILURE"}]}, Path("/tmp/second")),
+        ]
+        with mock.patch.object(board.curses, "color_pair", side_effect=lambda pair: pair << 8):
+            app.draw()
+        calls = [call.args for call in window.addnstr.call_args_list]
+        self.assertTrue(any(row == 1 and "LAST COMMIT" in value and "CI" in value and
+                            "DIFF" in value
+                            for row, _, value, *_ in calls))
+        selected = [call for call in calls if call[0] == 2]
+        self.assertEqual(len(selected), 1)
+        self.assertEqual(selected[0][4], board.curses.A_REVERSE | board.curses.A_BOLD)
+        self.assertIn("+0", selected[0][2])
+        self.assertIn("-2", selected[0][2])
+        self.assertIn("Passing", selected[0][2])
+        striped = [call for call in calls if call[0] == 3]
+        self.assertEqual(striped[0][4], 6 << 8)
+        self.assertFalse(striped[0][2].startswith("●"))
+        self.assertIn("+1,234,567 / -56", striped[0][2])
+        self.assertTrue(any("Failing" in call[2] and call[4] == 9 << 8 for call in striped))
+        self.assertTrue(any("+1,234,567" in call[2] and call[4] == 7 << 8 for call in striped))
+        self.assertTrue(any("-56" in call[2] and call[4] == 9 << 8 for call in striped))
+        header = next(value for row, _, value, *_ in calls if row == 1)
+        self.assertNotIn("WORKTREE", header)
+        self.assertEqual(striped[0][2].index("Second"), header.index("TITLE"))
+        self.assertTrue(any(row == 8 and "PR URL: https://github.com/o/r/pull/1" in value
+                            for row, _, value, *_ in calls))
+
+    def test_missing_diff_counts_are_not_reported_as_zero(self):
+        self.assertEqual(board.diff_count(None, "+"), "—")
+        self.assertEqual(board.diff_count(0, "+"), "+0")
+
+    def test_ci_status_summarizes_actions_and_commit_statuses(self):
+        checks = lambda *values: {"statusCheckRollup": list(values)}
+        self.assertEqual(board.ci_status(checks()), ("No checks", 0))
+        self.assertEqual(board.ci_status({}), ("—", 0))
+        self.assertEqual(board.ci_status(checks(
+            {"status": "IN_PROGRESS", "conclusion": None}, {"state": "SUCCESS"})),
+            ("Pending", 2))
+        self.assertEqual(board.ci_status(checks(
+            {"conclusion": "FAILURE", "status": "COMPLETED"}, {"state": "PENDING"})),
+            ("Failing", 3))
+        self.assertEqual(board.ci_status(checks({"conclusion": "SKIPPED"})), ("Skipped", 2))
+
+    def test_stripe_color_pairs_keep_the_terminal_foreground(self):
+        with mock.patch.object(board.curses, "has_colors", return_value=True), \
+             mock.patch.object(board.curses, "start_color"), \
+             mock.patch.object(board.curses, "use_default_colors"), \
+             mock.patch.object(board.curses, "init_pair") as init_pair, \
+             mock.patch.object(board.curses, "COLORS", 256, create=True), \
+             mock.patch.object(board.curses, "COLOR_PAIRS", 256, create=True), \
+             mock.patch.object(board, "stripe_background", return_value=254):
+            self.assertTrue(board.init_colors())
+        init_pair.assert_any_call(6, -1, 254)
+        init_pair.assert_any_call(7, board.curses.COLOR_GREEN, 254)
+        init_pair.assert_any_call(9, board.curses.COLOR_RED, 254)
 
     def test_pr_checkout_uses_herdr_and_leaves_current_worktree_alone(self):
         repo = Path("/tmp/project")
@@ -292,7 +484,7 @@ class ShiprTests(unittest.TestCase):
         app.items = [first, second]
         app.selected = 1
         updated = core.PullRequest(repo, {"number": 2, "state": "OPEN"})
-        app.updates.put((([updated, first], current, ""), None))
+        app.updates.put((core.BoardPage([updated, first], current, None, 2), None))
         app.receive_refresh()
         self.assertIs(app.selected_item(), updated)
         self.assertIs(app.current_tree, current)
@@ -359,9 +551,10 @@ class ShiprTests(unittest.TestCase):
         with mock.patch.object(board, "run") as command:
             app.handle_key(ord("o"))
         command.assert_called_once_with(["open", url], cwd=repo)
-        app.updates.put((([core.PullRequest(repo, {"number": 1, "state": "OPEN"}),
-                           core.PullRequest(repo, {"number": 42, "state": "OPEN", "url": url})],
-                          core.Worktree(repo, "topic/fix"), ""), None))
+        app.updates.put((core.BoardPage([
+            core.PullRequest(repo, {"number": 1, "state": "OPEN"}),
+            core.PullRequest(repo, {"number": 42, "state": "OPEN", "url": url})],
+            core.Worktree(repo, "topic/fix"), None, 2), None))
         app.receive_refresh()
         self.assertEqual(app.selected_item().pr["number"], 42)
 
@@ -374,6 +567,35 @@ class ShiprTests(unittest.TestCase):
         with mock.patch.object(board, "open_herdr_worktree") as opened:
             self.assertTrue(app.handle_action("focus_worktree"))
         opened.assert_called_once_with(repo, path, "feature")
+
+    def test_enter_focuses_or_opens_the_selected_pr_worktree(self):
+        repo = Path("/tmp/project")
+        app = board.ShiprApp(mock.Mock(), repo)
+        present = core.PullRequest(repo, {"number": 1, "headRefName": "feature"},
+                                   Path("/tmp/feature"))
+        absent = core.PullRequest(repo, {"number": 2, "headRefName": "other"})
+        app.items = [present, absent]
+        with mock.patch.object(board, "find_pr_worktree", side_effect=[present.worktree, None]), \
+             mock.patch.object(board, "open_herdr_worktree") as focus, \
+             mock.patch.object(app, "start_action") as start:
+            self.assertTrue(app.handle_key(10))
+            app.selected = 1
+            self.assertFalse(app.handle_key(board.curses.KEY_ENTER))
+        focus.assert_called_once_with(repo, present.worktree, "feature")
+        start.assert_called_once()
+
+    def test_right_click_resolves_worktree_only_for_the_clicked_pr(self):
+        repo = Path("/tmp/project")
+        window = mock.Mock()
+        window.getmaxyx.return_value = (12, 110)
+        app = board.ShiprApp(window, repo)
+        app.items = [core.PullRequest(repo, {"number": 1, "headRefName": "feature"})]
+        with mock.patch.object(board.curses, "getmouse", return_value=(0, 5, 2, 0,
+                                                                        board.curses.BUTTON3_PRESSED)), \
+             mock.patch.object(board, "find_pr_worktree", return_value=Path("/tmp/feature")) as find:
+            app.handle_mouse()
+        find.assert_called_once()
+        self.assertEqual(app.menu.actions[-1], ("Commit & push to PR", "update_pr"))
 
     def test_open_pr_uses_its_url(self):
         row = core.PullRequest(Path("/tmp/project"),

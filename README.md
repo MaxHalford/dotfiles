@@ -26,7 +26,7 @@ Ghostty and VS Code use Rosé Pine Dawn in light mode and Rosé Pine Moon in dar
 ## Herdr shortcuts
 
 - `Cmd+D`: Open Reviewr. Press `s` to send comments to the agent or `q` to close.
-- `Cmd+G`: Open shipr's table of the 50 most recent open PRs. Right-click a PR to open it in GitHub, open or focus its Herdr worktree, or commit and push changes to its head branch (including a fork when you have write access). Press `p` in the current worktree to create a PR when it has none, or to commit and push when it already has an open PR. Press `o` to open the created or selected PR, `r` to refresh, and `q` to close or cancel an active command.
+- `Cmd+G`: Open shipr's PR table. It loads 25 PRs first and fetches more as you navigate toward the end. The first column shows time since the latest commit, and loaded PRs are sorted newest first. Press `Enter` to focus or open the selected PR's Herdr worktree, `p` to publish or push from the current worktree, `o` to open the PR in GitHub, `r` to refresh, and `q` to close or cancel an active command. Right-click a PR for more actions.
 
 From a dirty default branch, `p` asks for a branch and commit message, creates the branch in the current worktree, commits and pushes the changes, and opens the PR. The current pane and Codex session stay in place. Shipr shows the PR URL after creation and selects its row on refresh. You can also use `p` from an existing feature branch. Opening an existing PR creates a separate Herdr worktree from the PR head. Pushing a PR checks its current head repository and branch again before sending commits.
 - `Ctrl+B`, then `m`: Open Mermaid preview.
