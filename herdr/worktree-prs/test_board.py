@@ -1,6 +1,7 @@
 import importlib.util
 import subprocess
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -66,6 +67,38 @@ class BoardTests(unittest.TestCase):
             result = board.publish(tree, "", True)
         self.assertEqual(result, "https://github.com/example/repo/pull/1")
         push.assert_called_once_with(tree.path, tree.branch)
+
+    def test_escape_closes_while_refresh_is_running(self):
+        window = mock.Mock()
+        window.getmaxyx.return_value = (24, 100)
+        window.getch.return_value = 27
+
+        def slow_refresh(_repo):
+            time.sleep(0.5)
+            return [], ""
+
+        with mock.patch.object(board, "repository_directory", return_value=Path("/tmp/example")), \
+             mock.patch.object(board, "load_board", side_effect=slow_refresh), \
+             mock.patch.object(board, "init_colors"), \
+             mock.patch.object(board.curses, "curs_set"), \
+             mock.patch.object(board.curses, "set_escdelay"):
+            started = time.monotonic()
+            board.main(window)
+            elapsed = time.monotonic() - started
+        self.assertLess(elapsed, 0.2)
+
+    def test_pr_status_colors(self):
+        with mock.patch.object(board.curses, "color_pair", side_effect=lambda pair: pair):
+            merged = board.Worktree(Path("/tmp/example"), "feature/a", pr={"state": "MERGED"})
+            failed = board.Worktree(Path("/tmp/example"), "feature/a", pr={
+                "state": "OPEN", "statusCheckRollup": [{"conclusion": "FAILURE"}]
+            })
+            waiting = board.Worktree(Path("/tmp/example"), "feature/a", pr={
+                "state": "OPEN", "reviewDecision": "REVIEW_REQUIRED"
+            })
+            self.assertEqual(board.status_style(merged), 4)
+            self.assertEqual(board.status_style(failed), 3)
+            self.assertEqual(board.status_style(waiting), 2)
 
 
 if __name__ == "__main__":

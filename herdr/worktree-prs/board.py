@@ -3,8 +3,12 @@
 import curses
 import json
 import os
+import queue
 import subprocess
+import sys
+import threading
 import time
+import traceback
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -35,6 +39,9 @@ def run(argv, cwd=None, timeout=45):
 
 def repository_directory():
     context = json.loads(os.environ.get("HERDR_PLUGIN_CONTEXT_JSON", "{}"))
+    cwd = context.get("focused_pane_cwd") or context.get("workspace_cwd")
+    if cwd:
+        return Path(run(["git", "rev-parse", "--show-toplevel"], cwd=cwd).strip())
     workspace_id = os.environ.get("HERDR_WORKSPACE_ID") or context.get("workspace_id")
     pane_id = context.get("pane_id") or context.get("focused_pane_id")
     snapshot_response = json.loads(run([os.environ.get("HERDR_BIN_PATH", "herdr"), "api", "snapshot"]))
@@ -57,7 +64,6 @@ class Worktree:
     branch: str
     unavailable: bool = False
     dirty: bool = False
-    ahead: int = 0
     pr: Optional[dict] = None
     pr_unavailable: bool = False
 
@@ -97,7 +103,7 @@ def pr_status(pr):
     elif pending:
         label += f" / {pending} pending"
     elif checks:
-        label += " / checks passed"
+        label += " / checks complete"
     review = pr.get("reviewDecision")
     if review == "CHANGES_REQUESTED":
         label += " / changes requested"
@@ -124,10 +130,6 @@ def load_board(repo):
         except CommandError:
             tree.unavailable = True
             continue
-        try:
-            tree.ahead = int(run(["git", "rev-list", "--count", "@{upstream}..HEAD"], cwd=tree.path).strip())
-        except (CommandError, ValueError):
-            tree.ahead = 0
         tree.pr = matching_pr(prs, tree.branch)
     return trees, error
 
@@ -187,18 +189,66 @@ def draw_line(window, row, text, width, style=0):
     window.addnstr(row, 0, clean(text).ljust(max(0, width - 1)), max(0, width - 1), style)
 
 
+def status_style(tree):
+    if tree.unavailable or tree.pr_unavailable or not tree.pr:
+        return curses.A_DIM
+    pr = tree.pr
+    if pr.get("state") == "MERGED":
+        return curses.color_pair(4)
+    if pr.get("state") != "OPEN":
+        return curses.A_DIM
+    checks = pr.get("statusCheckRollup") or []
+    if pr.get("reviewDecision") == "CHANGES_REQUESTED" or any(
+        check.get("conclusion") in ("FAILURE", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED")
+        or check.get("state") in ("FAILURE", "ERROR") for check in checks
+    ):
+        return curses.color_pair(3)
+    if pr.get("isDraft"):
+        return curses.color_pair(5)
+    if "pending" in pr_status(pr) or pr.get("reviewDecision") == "REVIEW_REQUIRED":
+        return curses.color_pair(2)
+    return curses.color_pair(1)
+
+
+def init_colors():
+    if not curses.has_colors():
+        return
+    curses.start_color()
+    try:
+        curses.use_default_colors()
+    except curses.error:
+        background = curses.COLOR_BLACK
+    else:
+        background = -1
+    for pair, color in ((1, curses.COLOR_GREEN), (2, curses.COLOR_YELLOW),
+                        (3, curses.COLOR_RED), (4, curses.COLOR_BLUE),
+                        (5, curses.COLOR_MAGENTA)):
+        curses.init_pair(pair, color, background)
+
+
 def prompt(window, label):
     height, width = window.getmaxyx()
-    draw_line(window, height - 1, label, width)
-    window.move(height - 1, min(len(label), width - 2))
-    curses.echo()
+    value = []
     window.timeout(-1)
     try:
-        value = window.getstr(height - 1, min(len(label), width - 2), max(1, width - len(label) - 2))
+        curses.curs_set(1)
+        while True:
+            draw_line(window, height - 1, label + "".join(value), width)
+            window.move(height - 1, min(len(label) + len(value), width - 2))
+            window.refresh()
+            key = window.get_wch()
+            if key in ("\n", "\r", curses.KEY_ENTER):
+                return "".join(value).strip()
+            if key == "\x1b":
+                return None
+            if key in ("\b", "\x7f", curses.KEY_BACKSPACE):
+                if value:
+                    value.pop()
+            elif isinstance(key, str) and key.isprintable() and len(label) + len(value) < width - 2:
+                value.append(key)
     finally:
-        curses.noecho()
-        window.timeout(500)
-    return value.decode("utf-8", "replace").strip()
+        curses.curs_set(0)
+        window.timeout(100)
 
 
 def confirm(window, label):
@@ -207,15 +257,52 @@ def confirm(window, label):
 
 def main(window):
     curses.curs_set(0)
+    curses.set_escdelay(25)
+    init_colors()
     window.keypad(True)
-    window.timeout(500)
+    window.timeout(100)
     repo = repository_directory()
-    trees, error = load_board(repo)
+    trees = []
+    error = ""
     selected = 0
     offset = 0
-    refreshed = time.monotonic()
-    message = error
+    refreshed = 0.0
+    message = "Loading worktrees and pull requests..."
+    updates = queue.Queue(maxsize=1)
+    refreshing = False
+
+    def start_refresh():
+        nonlocal refreshing
+        if refreshing:
+            return
+        refreshing = True
+
+        def worker():
+            try:
+                updates.put((load_board(repo), None))
+            except Exception as exc:
+                updates.put((None, str(exc)))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    start_refresh()
     while True:
+        try:
+            result, refresh_error = updates.get_nowait()
+        except queue.Empty:
+            pass
+        else:
+            refreshing = False
+            refreshed = time.monotonic()
+            if refresh_error:
+                message = f"Refresh failed: {refresh_error}"
+            else:
+                chosen = str(trees[selected].path) if trees else ""
+                trees, error = result
+                selected = next((i for i, tree in enumerate(trees) if str(tree.path) == chosen), 0)
+                message = error or f"Updated {time.strftime('%H:%M:%S')}"
+        if time.monotonic() - refreshed >= REFRESH_SECONDS:
+            start_refresh()
         height, width = window.getmaxyx()
         visible = max(1, height - 5)
         selected = min(selected, max(0, len(trees) - 1))
@@ -223,15 +310,20 @@ def main(window):
         if selected >= offset + visible:
             offset = selected - visible + 1
         window.erase()
-        draw_line(window, 0, f"Worktree PRs  {repo.name}  (refresh every {REFRESH_SECONDS}s)", width, curses.A_BOLD)
+        loading = "  refreshing..." if refreshing else ""
+        draw_line(window, 0, f"Worktree PRs  {repo.name}  (every {REFRESH_SECONDS}s){loading}", width, curses.A_BOLD)
         branch_width = max(12, (width - 36) // 3)
         path_width = max(12, (width - 36) // 3)
         draw_line(window, 1, f"{'WORKTREE':<{path_width}} {'BRANCH':<{branch_width}} {'LOCAL':<9} PR STATUS", width, curses.A_UNDERLINE)
         for row, tree in enumerate(trees[offset:offset + visible], start=2):
-            local = "unavailable" if tree.unavailable else ("dirty" if tree.dirty else (f"ahead {tree.ahead}" if tree.ahead else "clean"))
+            local = "unavailable" if tree.unavailable else ("dirty" if tree.dirty else "clean")
             status = "Unavailable" if tree.unavailable else ("PR unavailable" if tree.pr_unavailable else pr_status(tree.pr))
-            line = f"{tree.path.name:<{path_width}.{path_width}} {tree.branch:<{branch_width}.{branch_width}} {local:<9.9} {status}"
-            draw_line(window, row, line, width, curses.A_REVERSE if row - 2 + offset == selected else 0)
+            prefix = f"{tree.path.name:<{path_width}.{path_width}} {tree.branch:<{branch_width}.{branch_width}} {local:<9.9} "
+            selected_style = curses.A_REVERSE if row - 2 + offset == selected else 0
+            draw_line(window, row, prefix + status, width, selected_style)
+            if len(prefix) < width - 1:
+                window.addnstr(row, len(prefix), clean(status), width - len(prefix) - 1,
+                               selected_style | status_style(tree))
         draw_line(window, height - 3, "Up/Down select  c commit + create PR  p commit + push  r refresh  q/Esc close", width)
         detail = str(trees[selected].path) if trees else "No worktrees found"
         draw_line(window, height - 2, detail, width)
@@ -244,12 +336,9 @@ def main(window):
             selected = min(selected + 1, len(trees) - 1)
         elif key in (curses.KEY_UP, ord("k")):
             selected = max(0, selected - 1)
-        elif key in (ord("r"),) or time.monotonic() - refreshed >= REFRESH_SECONDS:
-            chosen = str(trees[selected].path) if trees else ""
-            trees, error = load_board(repo)
-            selected = next((i for i, tree in enumerate(trees) if str(tree.path) == chosen), 0)
-            refreshed = time.monotonic()
-            message = error or "Updated"
+        elif key == ord("r"):
+            start_refresh()
+            message = "Refreshing..."
         elif key in (ord("c"), ord("p")) and trees:
             tree = trees[selected]
             create_pr = key == ord("c")
@@ -272,8 +361,7 @@ def main(window):
                     message = "Cancelled: commit message required"
                     continue
                 message = publish(tree, commit_message, create_pr)
-                trees, error = load_board(repo)
-                refreshed = time.monotonic()
+                start_refresh()
             except CommandError as exc:
                 message = f"Failed: {exc}"
 
@@ -281,6 +369,11 @@ def main(window):
 if __name__ == "__main__":
     try:
         curses.wrapper(main)
-    except (CommandError, ValueError, KeyError) as error:
+    except Exception as error:
+        state = os.environ.get("HERDR_PLUGIN_STATE_DIR")
+        if state:
+            Path(state).mkdir(parents=True, exist_ok=True)
+            (Path(state) / "board-error.log").write_text(traceback.format_exc())
         print(f"Worktree PRs: {error}")
-        input("Press Enter to close...")
+        if sys.stdin.isatty():
+            input("Press Enter to close...")

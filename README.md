@@ -73,7 +73,7 @@ Install or update the tracked Herdr plugins and agent integrations:
 ```
 
 The Mermaid preview opens with `Ctrl+B`, then `m`.
-Open the worktree pull request popup with `Cmd+G`. It refreshes every 30 seconds; select a worktree and press `c` to commit all changes, push, and create a PR, or `p` to commit all changes and push. If the worktree is clean, these actions use its existing commits. Enter a commit message when prompted; press `r` to refresh or `q` to close.
+Open the worktree pull request popup with `Cmd+G`. It refreshes every 30 seconds without blocking input; select a worktree and press `c` to commit all changes, push, and create a PR, or `p` to commit all changes and push. If the worktree is clean, these actions use its existing commits. Enter a commit message when prompted; press `r` to refresh or `Esc`/`q` to close. PR statuses use green for open, yellow for pending checks or reviews, red for failing checks or requested changes, magenta for drafts, and blue for merged PRs.
 
 For VSCode extensions:
 
