@@ -2,6 +2,16 @@ onboarding = false
 
 [theme]
 name = "terminal"
+auto_switch = true
+light_name = "terminal"
+dark_name = "terminal"
+
+[theme.custom.light]
+# Rosé Pine Dawn's pine and base give the active tab readable light text.
+accent = "#286983"
+panel_bg = "#faf4ed"
+# Codex's light prompt fill over the Ghostty Dawn background.
+active_row_bg = "#f0eae4"
 
 [terminal]
 default_shell = "/bin/zsh"
@@ -13,6 +23,7 @@ kitty_graphics = true
 [ui]
 agent_panel_sort = "priority"
 show_agent_labels_on_pane_borders = false
+prompt_new_tab_name = false
 
 [[keys.command]]
 key = "cmd+g"
@@ -22,8 +33,8 @@ description = "open shipr"
 
 [[keys.command]]
 key = "cmd+d"
-type = "plugin_action"
-command = "persiyanov.reviewr.toggle"
+type = "shell"
+command = "sh \"$HOME/dotfiles/herdr/reviewr-toggle.sh\""
 description = "review changes and send comments to agent"
 
 [[keys.command]]

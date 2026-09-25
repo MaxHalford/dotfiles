@@ -29,7 +29,13 @@ Use `~/.secrets` for secrets and `~/.zshrc.local` for machine-specific shell set
 | `Cmd+E` | Open the focused pane's current directory in VS Code. |
 | `Cmd+G` | Open [shipr](herdr/shipr/README.md). |
 
+### Tab titles
+
+The Herdr Tab Title plugin names tabs after the focused pane's foreground program, such as `codex` or `hugo`. At an idle shell, it uses the current directory name. Manually renamed tabs keep their names.
+
 ### Reviewr
+
+When you press `Cmd+D`, Reviewr selects Rosé Pine Dawn in macOS light mode or Rosé Pine in dark mode before opening. An already open pane keeps its theme when macOS appearance changes; close and reopen it with `Cmd+D` to pick up the new theme.
 
 | Key | Action |
 | --- | --- |

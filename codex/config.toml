@@ -229,6 +229,9 @@ trust_level = "trusted"
 [projects."/Users/max/projects/max/river"]
 trust_level = "trusted"
 
+[projects."/Users/max/projects/max/squill"]
+trust_level = "trusted"
+
 [tui]
 screen_reader_detection_done = true
 
