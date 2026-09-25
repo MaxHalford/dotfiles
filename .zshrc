@@ -4,7 +4,7 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 export GPG_TTY=$(tty)
-export CUA_REPL_ENABLED_SURFACES="all"
+export CUA_REPL_ENABLED_SURFACES="browser,computer"
 
 # Oh-my-zsh
 export ZSH="$HOME/.oh-my-zsh"
