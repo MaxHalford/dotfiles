@@ -2,4 +2,4 @@ auto_open = false
 default_scope = "branch"
 toggle_placement = "overlay"
 editor = "/opt/homebrew/bin/code --goto {file}:{line}"
-theme = "rose-pine-dawn"
+theme = "rose-pine"
