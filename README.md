@@ -1,6 +1,10 @@
 # dotfiles
 
-Personal macOS setup for my shell, terminal, editors, and Herdr plugins.
+Personal macOS setup for my shell, terminal, editors, and Herdr plugins, plus the declarative NixOS configuration for my Beelink server.
+
+## NixOS server
+
+The Beelink SER8 configuration lives in [`nixos/beelink`](nixos/beelink/README.md). It defines the host, the Home Manager profile, and an always-on Hermes gateway with Chromium, Computer Use, and Bot Screen dependencies.
 
 ## Setup
 
