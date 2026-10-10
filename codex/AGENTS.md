@@ -1,4 +1,3 @@
 @/Users/max/.codex/RTK.md
 
-- For writing:
-  - Do not break Markdown paragraphs over multiple lines
+- When you write or edit a pull request description, use the `asd-ste100` skill in STE-flavored mode.

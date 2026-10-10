@@ -1,9 +1,9 @@
 notify = ["/Users/max/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
 
-# Emit clickable file citations that open in Visual Studio Code. In Herdr,
-# hold Shift to bypass pane mouse capture and Cmd-click the resulting link.
+# Use VS Code for file citations in clients that support editor links.
+# Codex CLI 0.157.1 renders ordinary file citations as plain paths.
 file_opener = "vscode"
-model = "gpt-6-sol"
+model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
 service_tier = "default"
 
@@ -39,9 +39,6 @@ enabled = true
 [plugins."template-creator@openai-primary-runtime"]
 enabled = true
 
-[plugins."sites@openai-bundled"]
-enabled = true
-
 [plugins."chrome@openai-bundled"]
 enabled = true
 
@@ -54,7 +51,13 @@ enabled = true
 [plugins."unified-computer-use@openai-bundled"]
 enabled = true
 
+[plugins."unified-computer-use@openai-bundled".mcp_servers.cua_repl.tools.js]
+approval_mode = "approve"
+
 [plugins."computer-use@openai-bundled"]
+enabled = true
+
+[plugins."code-review@openai-bundled"]
 enabled = true
 
 [features]
@@ -73,16 +76,16 @@ NODE_REPL_NODE_MODULE_DIRS = "/Applications/ChatGPT.app/Contents/Resources/cua_n
 NODE_REPL_NODE_PATH = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node"
 NODE_REPL_TRUSTED_CODE_PATHS = "/Users/max/.codex:/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
 CODEX_HOME = "/Users/max/.codex"
-BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab,mcpapps"
 BROWSER_USE_TINYSKY_ENABLED = "1"
 NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = ""
 NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = ""
 NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = ""
 BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-BROWSER_USE_CODEX_APP_VERSION = "26.903.61454"
-NODE_REPL_TRUSTED_SERVICES = '{"browser":"/Users/max/.codex/plugins/cache/openai-bundled/browser/26.903.61454/scripts/browser-service.mjs","sky":"@oai/sky/service"}'
+BROWSER_USE_CODEX_APP_VERSION = "26.930.51102"
+NODE_REPL_TRUSTED_SERVICES = '{"browser":"/Users/max/.codex/plugins/cache/openai-bundled/browser/26.930.51102/scripts/browser-service.mjs","sky":"@oai/sky/service"}'
 SKY_CUA_SERVICE_PATH = "/Users/max/.codex/computer-use/Codex Computer Use.app"
-CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
+CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
 
 [mcp_servers.CodSpeed]
 url = "https://mcp.codspeed.io/mcp"
@@ -91,10 +94,22 @@ url = "https://mcp.codspeed.io/mcp"
 command = "railway"
 args = ["mcp"]
 
+[mcp_servers.railway.tools.create_service]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.deploy]
+approval_mode = "approve"
+
 [mcp_servers.railway.tools.environment_status]
 approval_mode = "approve"
 
 [mcp_servers.railway.tools.get_logs]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.get_service_config]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.list_deployments]
 approval_mode = "approve"
 
 [mcp_servers.railway.tools.list_domains]
@@ -112,13 +127,10 @@ approval_mode = "approve"
 [mcp_servers.railway.tools.whoami]
 approval_mode = "approve"
 
-[mcp_servers.railway.tools.list_deployments]
+[mcp_servers.railway.tools.service_metrics]
 approval_mode = "approve"
 
-[mcp_servers.railway.tools.get_service_config]
-approval_mode = "approve"
-
-[mcp_servers.railway.tools.create_service]
+[mcp_servers.railway.tools.set_variables]
 approval_mode = "approve"
 
 [mcp_servers.cloudflare]
@@ -127,17 +139,44 @@ url = "https://mcp.cloudflare.com/mcp"
 [mcp_servers.cloudflare.tools.execute]
 approval_mode = "approve"
 
+[mcp_servers.datadog]
+url = "https://mcp.us5.datadoghq.com/v1/mcp"
+
 [mcp_servers.computer-use]
 command = "./Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient"
 args = ["mcp"]
 cwd = "."
 enabled = false
 
+[mcp_servers.corridor]
+url = "https://app.corridor.dev/api/mcp"
+enabled = false
+
+[mcp_servers.corridor.tools.analyzePlan]
+approval_mode = "approve"
+
+[mcp_servers.corridor.tools.askQuestion]
+approval_mode = "approve"
+
+[mcp_servers.corridor.tools.getFindings]
+approval_mode = "approve"
+
+[mcp_servers.corridor.tools.getGuardrails]
+approval_mode = "approve"
+
+[mcp_servers.corridor.tools.listProjects]
+approval_mode = "approve"
+
+[mcp_servers.agentation]
+command = "npx"
+args = ["-y", "agentation-mcp", "server"]
+
 [desktop]
 conversationDetailMode = "STEPS_COMMANDS"
 ambient-suggestions-enabled = false
 followUpQueueMode = "queue"
 toys-confetti-enabled = true
+open-link-in-target-preference = "in-app-browser"
 
 [projects."/Users/max/projects"]
 trust_level = "trusted"
@@ -232,19 +271,52 @@ trust_level = "trusted"
 [projects."/Users/max/projects/max/squill"]
 trust_level = "trusted"
 
+[projects."/Users/max/projects/max/presidentielle2027"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/turbopuffer"]
+trust_level = "trusted"
+
+[projects."/Users/max/Documents/Codex/2026-09-25/notion-plugin-notion-openai-curated-remote"]
+trust_level = "trusted"
+
+[projects."/Users/max/Documents/Codex/2026-09-25/notion-plugin-notion-openai-curated-remote-2"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/tpuf-datasci"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/max/elsa-leo"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/max/family"]
+trust_level = "trusted"
+
+[projects."/Users/max/projects/max/maxhalford.github.io"]
+trust_level = "trusted"
+
 [tui]
 screen_reader_detection_done = true
+# Use the terminal palette so Ghostty's Rosé Pine light/dark switch applies.
+theme = "ansi"
 
 [tui.model_availability_nux]
 "gpt-5.6-sol" = 4
 gpt-6-astra = 4
+"gpt-6.1-sol" = 4
 
 [hooks.state]
 
 [hooks.state."/Users/max/.codex/hooks.json:session_start:0:0"]
 trusted_hash = "sha256:59e85fcf0a3273d73647f33a8b441d55e30816666c0b100cfddc1282b08895c1"
 
+[hooks.state."/Users/max/.codex/hooks.json:pre_tool_use:0:0"]
+trusted_hash = "sha256:96a21ed9dd0462ac8a71ab657371a21b8dc043205f1bc4cb0394a395407b1fd9"
+
 [apps.connector_76869538009648d5b282a4bb21c3d157.tools."github.create_pull_request"]
+approval_mode = "approve"
+
+[apps.asdk_app_69a1d78e929881919bba0dbda1f6436d.tools."slack.slack_send_message"]
 approval_mode = "approve"
 
 [shell_environment_policy.set]

@@ -1,7 +1,7 @@
 import argparse
 import os
 from pathlib import Path
-import shlex
+import subprocess
 import tempfile
 
 
@@ -42,32 +42,35 @@ def symlink(src: str, dst_dir: str, dst_name=None):
 
 
 SYMLINKS = [
+    ("zsh/.zshrc", "~/"),
+    ("zsh/.p10k.zsh", "~/"),
+    ("ghostty/config.ghostty", "~/.config/ghostty"),
+    ("herdr/config.toml", "~/.config/herdr"),
     ("vscode/settings.json", "~/Library/Application Support/Code/User"),
     ("vscode/keybindings.json", "~/Library/Application Support/Code/User"),
     ("vscode/snippets", "~/Library/Application Support/Code/User"),
     ("zed/settings.json", "~/Library/Application Support/Zed"),
     ("zed/keymap.json", "~/Library/Application Support/Zed"),
-    ("ghostty/config.ghostty", "~/.config/ghostty"),
-    ("herdr/config.toml", "~/.config/herdr"),
-    (".ipython/profile_default/startup", "~/.ipython/profile_default"),
+    ("ipython/startup", "~/.ipython/profile_default"),
+    ("claude/settings.json", "~/.claude"),
+    ("claude/CLAUDE.md", "~/.claude"),
     ("codex/AGENTS.md", "~/.codex"),
     ("codex/config.toml", "~/.codex"),
-    (".zshrc", "~/"),
-    (".p10k.zsh", "~/"),
-    ("claude/settings.json", "~/.claude"),
-    ("claude/statusline-command.sh", "~/.claude"),
-    ("iterm2/com.max.iterm-clear-tab-color.plist", "~/Library/LaunchAgents"),
-    ("warcraft3/CustomKeys.txt", "~/Library/Application Support/Blizzard/Warcraft III/CustomKeyBindings"),
+    ("codex/hooks.json", "~/.codex"),
+    ("games/warcraft3/CustomKeys.txt", "~/Library/Application Support/Blizzard/Warcraft III/CustomKeyBindings"),
 ]
 
-LAUNCH_AGENTS = [
-    "iterm2/com.max.iterm-clear-tab-color.plist",
+# Every skill in agents/skills is shared by Claude Code and Codex.
+SYMLINKS += [
+    (f"agents/skills/{skill.name}", dst_dir)
+    for skill in sorted((HERE / "agents/skills").iterdir()) if skill.is_dir()
+    for dst_dir in ("~/.claude/skills", "~/.codex/skills")
 ]
 
 
 def link_wow_fonts():
     root = Path(os.environ.get("WOW_ROOT", "/Applications/World of Warcraft")).expanduser()
-    src = "wow/fonts/DorisPP.ttf"
+    src = "games/wow/fonts/DorisPP.ttf"
     names = ("ARIALN.ttf", "FRIZQT__.ttf", "MORPHEUS.ttf", "skurri.ttf")
     for client in sorted(root.glob("_*_")):
         if not client.is_dir():
@@ -100,11 +103,15 @@ def link_wow_fonts():
             symlink(src, str(fonts), name)
 
 
-def reload_launch_agent(plist_rel: str):
-    plist = (HERE / plist_rel).resolve()
-    os.system(f"launchctl unload {shlex.quote(str(plist))} 2>/dev/null")
-    os.system(f"launchctl load {shlex.quote(str(plist))}")
-    print(f"launchctl reloaded {plist.name}")
+def use_git_hooks():
+    # Run dotfiles hooks in every repository; forward-local keeps each repo's own hooks working.
+    hooks = str(ANCHOR / "git-hooks")
+    current = subprocess.run(["git", "config", "--global", "core.hooksPath"],
+                             capture_output=True, text=True).stdout.strip()
+    if current == hooks:
+        return
+    subprocess.run(["git", "config", "--global", "core.hooksPath", hooks], check=True)
+    print(f"git core.hooksPath -> {hooks}")
 
 
 if __name__ == "__main__":
@@ -115,6 +122,5 @@ if __name__ == "__main__":
     if not args.wow_only:
         for src, dst_dir in SYMLINKS:
             symlink(src, dst_dir)
-        for plist in LAUNCH_AGENTS:
-            reload_launch_agent(plist)
+        use_git_hooks()
     link_wow_fonts()

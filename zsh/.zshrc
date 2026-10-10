@@ -6,6 +6,11 @@ fi
 export GPG_TTY=$(tty)
 export CUA_REPL_ENABLED_SURFACES="browser,computer"
 
+# Restore passphrase-protected SSH keys saved in the macOS Keychain for Git signing.
+if [[ "$OSTYPE" == darwin* ]]; then
+  /usr/bin/ssh-add --apple-load-keychain >/dev/null 2>&1
+fi
+
 # Oh-my-zsh
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=5'
@@ -55,6 +60,7 @@ nvm() {
 
 # PATH
 export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/dotfiles/bin:$PATH"
 export PATH="/Applications/Postgres.app/Contents/Versions/latest/bin:$PATH"
 export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
 
@@ -93,11 +99,26 @@ compinit
 # p10k config
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-alias claude='claude --enable-auto-mode'
+# Herdr doesn't answer background-color queries, so Claude's "auto" theme
+# falls back to dark. Follow the macOS appearance instead, like Ghostty does, and
+# use the ANSI variants so colors come from the Ghostty (Rosé Pine) palette.
+claude() {
+  local theme=light-ansi
+  [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == Dark ]] && theme=dark-ansi
+  command claude --enable-auto-mode --settings "{\"theme\":\"$theme\"}" "$@"
+}
 
-# peon-ping quick controls
-alias peon="bash $HOME/.claude/hooks/peon-ping/peon.sh"
-[ -f "$HOME/.claude/hooks/peon-ping/completions.bash" ] && source "$HOME/.claude/hooks/peon-ping/completions.bash"
+# Log in first when needed (see bin/gauth), but only from a terminal so scripts
+# never block on a browser. Agents get the same check through a PreToolUse hook.
+_gauth_then() { [[ -t 1 ]] && gauth; command "$@"; }
+bq() { _gauth_then bq "$@"; }
+gsutil() { _gauth_then gsutil "$@"; }
+gcloud() {
+  case "$1" in
+    auth|config|components|version|help|"") command gcloud "$@" ;;
+    *) _gauth_then gcloud "$@" ;;
+  esac
+}
 
 # Host-specific overrides (machine-injected installers, work-only env, etc.)
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local

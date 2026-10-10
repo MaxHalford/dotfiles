@@ -19,11 +19,21 @@ shell_mode = "login"
 
 [experimental]
 kitty_graphics = true
+# Keep pane scrollback across full server restarts.
+pane_history = true
 
 [ui]
+copy_on_select = true
 agent_panel_sort = "priority"
 show_agent_labels_on_pane_borders = false
 prompt_new_tab_name = false
+
+status_indicators = "symbols"
+[[keys.command]]
+key = "prefix+m"
+type = "plugin_action"
+command = "dev.volpestyle.mermaid-preview.open"
+description = "open Mermaid preview"
 
 [[keys.command]]
 key = "cmd+g"
