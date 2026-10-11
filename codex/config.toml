@@ -311,7 +311,7 @@ gpt-6-astra = 4
 trusted_hash = "sha256:59e85fcf0a3273d73647f33a8b441d55e30816666c0b100cfddc1282b08895c1"
 
 [hooks.state."/Users/max/.codex/hooks.json:pre_tool_use:0:0"]
-trusted_hash = "sha256:96a21ed9dd0462ac8a71ab657371a21b8dc043205f1bc4cb0394a395407b1fd9"
+trusted_hash = "sha256:2f2313d7caabd19116ad5b0175415814ae05e91346a40c8285fc1783132c443f"
 
 [apps.connector_76869538009648d5b282a4bb21c3d157.tools."github.create_pull_request"]
 approval_mode = "approve"

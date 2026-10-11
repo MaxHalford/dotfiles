@@ -99,13 +99,11 @@ compinit
 # p10k config
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# Herdr doesn't answer background-color queries, so Claude's "auto" theme
-# falls back to dark. Follow the macOS appearance instead, like Ghostty does, and
-# use the ANSI variants so colors come from the Ghostty (Rosé Pine) palette.
+# The theme comes from claude/settings.json ("auto"): Herdr answers
+# background-color queries with the Ghostty background, so Claude picks light or
+# dark by itself.
 claude() {
-  local theme=light-ansi
-  [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == Dark ]] && theme=dark-ansi
-  command claude --enable-auto-mode --settings "{\"theme\":\"$theme\"}" "$@"
+  command claude --enable-auto-mode "$@"
 }
 
 # Log in first when needed (see bin/gauth), but only from a terminal so scripts
