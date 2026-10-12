@@ -15,6 +15,7 @@ brew "go"
 brew "hashicorp/tap/terraform"
 brew "herdr"
 brew "hugo"
+brew "jq"
 brew "node"
 brew "poppler"
 brew "pyenv"
@@ -39,7 +40,5 @@ cask "rectangle"
 cask "visual-studio-code"
 cask "zed"
 
-# Third-party applications
-cask "steipete/tap/codexbar", trusted: true
 # Set of tools to manage resources and applications hosted on Google Cloud
 cask "gcloud-cli"

@@ -114,6 +114,14 @@ def use_git_hooks():
     print(f"git core.hooksPath -> {hooks}")
 
 
+def strip_private_settings():
+    # .gitattributes runs claude/settings.json through this filter, so the committed copy
+    # never contains autoMode while the local file keeps it.
+    for key, value in (("clean", "jq 'del(.autoMode)'"), ("smudge", "cat"), ("required", "true")):
+        subprocess.run(["git", "-C", str(HERE), "config", f"filter.strip-automode.{key}", value],
+                       check=True)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--wow-only", action="store_true", help="Only install WoW fonts")
@@ -123,4 +131,5 @@ if __name__ == "__main__":
         for src, dst_dir in SYMLINKS:
             symlink(src, dst_dir)
         use_git_hooks()
+        strip_private_settings()
     link_wow_fonts()

@@ -1,0 +1,3 @@
+# Claude Code writes work-specific autoMode rules into settings.json; keep them out of
+# this public repo. install.py defines the filter.
+claude/settings.json filter=strip-automode

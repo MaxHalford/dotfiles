@@ -108,13 +108,13 @@ claude() {
 
 # Log in first when needed (see bin/gauth), but only from a terminal so scripts
 # never block on a browser. Agents get the same check through a PreToolUse hook.
-_gauth_then() { [[ -t 1 ]] && gauth; command "$@"; }
-bq() { _gauth_then bq "$@"; }
-gsutil() { _gauth_then gsutil "$@"; }
+gauth_then() { [[ -t 1 ]] && gauth; command "$@"; }
+bq() { gauth_then bq "$@"; }
+gsutil() { gauth_then gsutil "$@"; }
 gcloud() {
   case "$1" in
     auth|config|components|version|help|"") command gcloud "$@" ;;
-    *) _gauth_then gcloud "$@" ;;
+    *) gauth_then gcloud "$@" ;;
   esac
 }
 

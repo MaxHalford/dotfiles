@@ -9,12 +9,6 @@ herdr plugin link "$HOME/dotfiles/herdr/shipr"
 herdr integration install codex
 herdr integration install claude
 
-# Teach both agents to drive Herdr, matching the installed version.
-for skills in "$HOME/.claude/skills" "$HOME/.codex/skills"; do
-    mkdir -p "$skills/herdr"
-    herdr --skill > "$skills/herdr/SKILL.md"
-done
-
 # .zshrc adds ~/.zfunc to fpath before compinit.
 mkdir -p "$HOME/.zfunc"
 herdr completion zsh > "$HOME/.zfunc/_herdr"
