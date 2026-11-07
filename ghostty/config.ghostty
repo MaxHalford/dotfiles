@@ -1,8 +1,8 @@
-# Hold Command while hovering a URL or file path, then left-click to open it.
-# File-path detection is built into Ghostty; this keeps URL matching explicit.
+# Hold Command while hovering a URL, then left-click to open it.
+# Ghostty 1.3.1 does not detect plain file paths.
 link-url = true
 
-# Match the word-deletion behavior used in iTerm2.
+# Option+Backspace deletes the previous word.
 # Escape + DEL is understood by Zsh as backward-kill-word.
 keybind = alt+backspace=text:\x1b\x7f
 
@@ -20,6 +20,12 @@ keybind = super+e=unbind
 
 # Follow macOS appearance with Ghostty's bundled Rosé Pine themes.
 theme = light:Rose Pine Dawn,dark:Rose Pine Moon
+
+# Rosé Pine Dawn's bright black is light gray, and Claude's ANSI theme draws
+# diffs in it with the faint attribute, which made them unreadable. Darken
+# any text that is too close to its background (WCAG ratio, 1 = off).
+minimum-contrast = 3
+faint-opacity = 0.7
 
 window-padding-x = 8
 window-padding-y = 6

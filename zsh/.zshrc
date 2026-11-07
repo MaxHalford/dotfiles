@@ -6,6 +6,11 @@ fi
 export GPG_TTY=$(tty)
 export CUA_REPL_ENABLED_SURFACES="browser,computer"
 
+# Restore passphrase-protected SSH keys saved in the macOS Keychain for Git signing.
+if [[ "$OSTYPE" == darwin* ]]; then
+  /usr/bin/ssh-add --apple-load-keychain >/dev/null 2>&1
+fi
+
 # Oh-my-zsh
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=5'
@@ -55,6 +60,7 @@ nvm() {
 
 # PATH
 export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/dotfiles/bin:$PATH"
 export PATH="/Applications/Postgres.app/Contents/Versions/latest/bin:$PATH"
 export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
 
@@ -93,11 +99,24 @@ compinit
 # p10k config
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-alias claude='claude --enable-auto-mode'
+# The theme comes from claude/settings.json ("auto"): Herdr answers
+# background-color queries with the Ghostty background, so Claude picks light or
+# dark by itself.
+claude() {
+  command claude --enable-auto-mode "$@"
+}
 
-# peon-ping quick controls
-alias peon="bash $HOME/.claude/hooks/peon-ping/peon.sh"
-[ -f "$HOME/.claude/hooks/peon-ping/completions.bash" ] && source "$HOME/.claude/hooks/peon-ping/completions.bash"
+# Log in first when needed (see bin/gauth), but only from a terminal so scripts
+# never block on a browser. Agents get the same check through a PreToolUse hook.
+gauth_then() { [[ -t 1 ]] && gauth; command "$@"; }
+bq() { gauth_then bq "$@"; }
+gsutil() { gauth_then gsutil "$@"; }
+gcloud() {
+  case "$1" in
+    auth|config|components|version|help|"") command gcloud "$@" ;;
+    *) gauth_then gcloud "$@" ;;
+  esac
+}
 
 # Host-specific overrides (machine-injected installers, work-only env, etc.)
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local

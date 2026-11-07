@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# The global core.hooksPath stops Git from running a repository's own
+# .git/hooks. Every hook name here links to this script, which runs the
+# repository's hook of the same name if it has one.
+hook="${HOOK_NAME:-$(basename "$0")}"
+local_hook="$(git rev-parse --path-format=absolute --git-common-dir)/hooks/$hook"
+[ -x "$local_hook" ] || exit 0
+exec "$local_hook" "$@"

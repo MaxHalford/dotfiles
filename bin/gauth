@@ -1,0 +1,21 @@
+#!/bin/zsh
+# The Teleport workforce session expires daily. gauth refreshes gcloud and ADC
+# credentials in one browser login, but only when they've actually expired.
+# Used by the bq/gcloud/gsutil wrappers in .zshrc and by the agents' hook.
+# Pass -f to skip the cache and always check.
+
+# Skip the ~1s token check if credentials were fine in the last 10 minutes.
+stamp=${TMPDIR:-/tmp}/gauth-ok
+[[ "$1" != -f && -n $(find "$stamp" -mmin -10 2>/dev/null) ]] && exit 0
+
+if gcloud auth print-access-token >/dev/null 2>&1 &&
+   gcloud auth application-default print-access-token >/dev/null 2>&1; then
+  touch "$stamp"
+  exit 0
+fi
+
+echo "gcloud session expired, opening browser login…" >&2
+afplay /System/Library/Sounds/Submarine.aiff &!
+gcloud auth login --update-adc </dev/null >&2 || exit
+afplay /System/Library/Sounds/Glass.aiff &!
+touch "$stamp"
