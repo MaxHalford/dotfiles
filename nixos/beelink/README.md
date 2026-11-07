@@ -71,6 +71,20 @@ systemctl --user daemon-reload
 
 Then perform one controlled reboot and repeat the verification checks.
 
+## Weekly update check and conditional reboot
+
+A separate Hermes notification runs every Sunday at 09:00 Europe/Paris. It checks Hermes, NixOS inputs, gateway health, failed units, disk space, and whether a fresh generation builds. It does not grant a mutable remote branch unattended root access: dependency refreshes remain reviewed `flake.lock` changes that are built before activation.
+
+At 10:00, a system timer compares the booted kernel, modules, and initrd with the already-reviewed system profile. It rechecks that the profile did not change during the comparison, then reboots immediately only when those boot artifacts differ; otherwise it exits without rebooting. Inspect it with:
+
+```sh
+systemctl status reboot-into-pending-generation.timer
+systemctl list-timers reboot-into-pending-generation.timer
+journalctl -u reboot-into-pending-generation.service -n 100 --no-pager
+```
+
+Failed builds never change the system profile. Existing NixOS boot generations remain available for rollback.
+
 ## Roll back
 
 If activation or verification fails, stop and detach the declarative user unit before restoring the legacy service. This prevents both gateways from surviving the system rollback:
