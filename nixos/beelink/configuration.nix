@@ -81,6 +81,7 @@
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHiaw75TP13e1YbzfHgzId3zEHuubpncaqhFk+5jRGax"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDfGI/mLCn/jilLnVpyL96pvbsYK2jauB1JVZgaTxW3y cowboy-iphone-15"
+      "no-agent-forwarding,no-port-forwarding,no-X11-forwarding ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICL8lu8NANdZBfZyTxEQ4XpWjVpF4SEBcL35W/eZXSzh herdrchat-iphone-15"
     ];
   };
 
