@@ -4,6 +4,12 @@ This directory defines the Beelink SER8 server, including its always-on Hermes T
 
 Hermes keeps all durable state under `/home/max/.hermes`. The Nix configuration does not manage or replace `.env` or `auth.json`; credentials, sessions, skills, memory, cron jobs, and browser state remain outside Git.
 
+## Remote access
+
+The Mac SSH alias is tracked in `ssh/config`. From another Tailscale device, connect to `100.103.169.94` on TCP port 22 as `max`. Give each phone or computer its own SSH key. Do not copy a private key between devices.
+
+Herdr runs as the `max` user and listens on Unix sockets in `/home/max/.config/herdr`. The NixOS firewall exposes SSH only on the LAN and Tailscale interfaces. SSH password login, root login, agent forwarding, X11 forwarding, and device tunnels are disabled. TCP forwarding stays enabled for VS Code Remote SSH and explicit private tunnels.
+
 ## First migration
 
 Run these steps from the repository root. Build the new generation before stopping the current gateway:

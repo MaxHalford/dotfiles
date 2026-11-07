@@ -47,6 +47,11 @@ in
 
   home.packages = [ pkgs.herdr ];
 
+  xdg.configFile."herdr/config.toml" = {
+    source = ./herdr.toml;
+    force = true;
+  };
+
   # Keep Nix-managed command-line tools separate from the mutable PM cache of
   # the pre-Nix installation. The directory may hold optional runtime downloads,
   # but credentials, sessions, and all durable state remain in ~/.hermes.

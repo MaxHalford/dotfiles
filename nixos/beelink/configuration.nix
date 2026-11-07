@@ -92,9 +92,13 @@
     enable = true;
     openFirewall = false;
     settings = {
+      AllowAgentForwarding = false;
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
+      MaxAuthTries = 3;
       PermitRootLogin = "no";
+      PermitTunnel = false;
+      X11Forwarding = false;
     };
   };
   services.tailscale.enable = true;

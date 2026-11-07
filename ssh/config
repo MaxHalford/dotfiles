@@ -1,0 +1,8 @@
+Include /Users/max/.ssh/conductor_config
+
+Host beelink
+    HostName 100.103.169.94
+    User max
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+    ForwardAgent no
