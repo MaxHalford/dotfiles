@@ -1,6 +1,10 @@
 # dotfiles
 
-Personal macOS setup for my shell, terminal, editors, and Herdr plugins.
+Personal macOS setup for my shell, terminal, editors, and Herdr plugins, plus the declarative NixOS configuration for my Beelink server.
+
+## NixOS server
+
+The Beelink SER8 configuration lives in [`nixos/beelink`](nixos/beelink/README.md). It defines the host, the Home Manager profile, and the persistent Herdr and Hermes services.
 
 ## Setup
 
@@ -16,6 +20,18 @@ python install.py
 ```
 
 `install.py` links the tracked configs through `~/dotfiles` and sets the global Git hooks path. Rerun it after adding a config, a skill, or moving this checkout.
+
+## Remote Beelink
+
+`install.py` links the tracked `beelink` SSH host. The alias uses the Beelink's Tailscale address and does not forward the Mac's SSH agent.
+
+```sh
+ssh beelink
+herdr machine add beelink --label Beelink
+herdr
+```
+
+Herdr stores the saved-machine catalog as local client state. The SSH target and the Beelink's Herdr package, config, and service remain reproducible from this repository.
 
 ## Layout
 

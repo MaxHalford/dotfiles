@@ -44,6 +44,7 @@ def symlink(src: str, dst_dir: str, dst_name=None):
 SYMLINKS = [
     ("zsh/.zshrc", "~/"),
     ("zsh/.p10k.zsh", "~/"),
+    ("ssh/config", "~/.ssh"),
     ("ghostty/config.ghostty", "~/.config/ghostty"),
     ("herdr/config.toml", "~/.config/herdr"),
     ("vscode/settings.json", "~/Library/Application Support/Code/User"),
