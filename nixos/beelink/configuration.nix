@@ -77,6 +77,7 @@
     isNormalUser = true;
     extraGroups = [ "wheel" ];
     linger = true;
+    shell = pkgs.zsh;
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHiaw75TP13e1YbzfHgzId3zEHuubpncaqhFk+5jRGax"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDfGI/mLCn/jilLnVpyL96pvbsYK2jauB1JVZgaTxW3y cowboy-iphone-15"
@@ -88,6 +89,10 @@
     gh
     ripgrep
   ];
+
+  # Register zsh as a valid login shell. Home Manager owns the interactive
+  # configuration and completions for max.
+  programs.zsh.enable = true;
 
   services.openssh = {
     enable = true;

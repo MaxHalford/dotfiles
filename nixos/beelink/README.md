@@ -10,6 +10,19 @@ The Mac SSH alias is tracked in `ssh/config`. From another Tailscale device, con
 
 Herdr runs as the `max` user and listens on Unix sockets in `/home/max/.config/herdr`. The NixOS firewall exposes SSH only on the LAN and Tailscale interfaces. SSH password login, root login, agent forwarding, X11 forwarding, and device tunnels are disabled. TCP forwarding stays enabled for VS Code Remote SSH and explicit private tunnels.
 
+## Interactive development shell
+
+The Home Manager profile provides the same core interactive experience over SSH and Herdr: zsh, Powerlevel10k, completion, autosuggestions, syntax highlighting, fuzzy history search, directory jumping, Git aliases, and common CLI tools. The tracked prompt is shared with macOS, but the Beelink does not load macOS-only Homebrew, Keychain, desktop-app, or browser integration paths.
+
+Codex is installed from the pinned Nixpkgs input. After the first activation, authenticate the Beelink itself with the device-code flow:
+
+```sh
+codex login --device-auth
+codex login status
+```
+
+Open the displayed URL on any signed-in device and enter the one-time code. Codex keeps credentials and sessions under `~/.codex`; these files are not managed by Home Manager or committed to Git. Do not copy `auth.json` into this repository.
+
 ## First migration
 
 Run these steps from the repository root. Build the new generation before stopping the current gateway:

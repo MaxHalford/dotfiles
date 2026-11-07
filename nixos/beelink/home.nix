@@ -1,4 +1,4 @@
-{ lib, pkgs, hermesAgent, ... }:
+{ config, lib, pkgs, hermesAgent, ... }:
 
 let
   system = pkgs.stdenv.hostPlatform.system;
@@ -42,10 +42,116 @@ in
     stateVersion = "26.05";
   };
 
-  programs.home-manager.enable = true;
-  programs.hermes-agent.enable = true;
+  programs = {
+    home-manager.enable = true;
+    hermes-agent.enable = true;
 
-  home.packages = [ pkgs.herdr ];
+    bat.enable = true;
+
+    direnv = {
+      enable = true;
+      nix-direnv.enable = true;
+    };
+
+    eza = {
+      enable = true;
+      enableZshIntegration = true;
+      git = true;
+      icons = "auto";
+      extraOptions = [ "--group-directories-first" ];
+    };
+
+    fzf = {
+      enable = true;
+      enableZshIntegration = true;
+    };
+
+    jq.enable = true;
+    ripgrep.enable = true;
+
+    zoxide = {
+      enable = true;
+      enableZshIntegration = true;
+    };
+
+    zsh = {
+      enable = true;
+      enableCompletion = true;
+      autosuggestion = {
+        enable = true;
+        highlight = "fg=5";
+      };
+      syntaxHighlighting.enable = true;
+      defaultKeymap = "emacs";
+
+      history = {
+        expireDuplicatesFirst = true;
+        extended = true;
+        ignoreAllDups = true;
+        path = "${config.xdg.dataHome}/zsh/history";
+        save = 100000;
+        share = true;
+        size = 100000;
+      };
+
+      oh-my-zsh = {
+        enable = true;
+        plugins = [ "git" ];
+      };
+
+      plugins = [
+        {
+          name = "powerlevel10k";
+          src = pkgs.zsh-powerlevel10k;
+          file = "share/zsh-powerlevel10k/powerlevel10k.zsh-theme";
+        }
+        {
+          name = "zsh-fzf-history-search";
+          src = pkgs.zsh-fzf-history-search;
+          file = "share/zsh-fzf-history-search/zsh-fzf-history-search.zsh";
+        }
+      ];
+
+      initContent = lib.mkAfter ''
+        # Match the Mac's completion and history-search behavior.
+        bindkey -M emacs '^I' expand-or-complete
+        bindkey -M viins '^I' expand-or-complete
+        zstyle ':completion:*' menu select
+        [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+        # Keep optional, host-local secrets and overrides outside Git.
+        [[ ! -f ~/.secrets ]] || source ~/.secrets
+        [[ ! -f ~/.zshrc.local ]] || source ~/.zshrc.local
+      '';
+    };
+  };
+
+  home.packages = with pkgs; [
+    codex
+    fd
+    gh
+    git
+    herdr
+    nodejs_26
+    rtk
+    tree
+    uv
+  ];
+
+  home.file = {
+    # Reuse the platform-neutral prompt from the Mac without importing the
+    # Mac-specific shell bootstrap, Homebrew paths, or Keychain commands.
+    ".p10k.zsh".source = ../../zsh/.p10k.zsh;
+
+    # Codex configuration, credentials, and sessions stay mutable and private
+    # in ~/.codex. Only safe global instructions and shared skills are managed.
+    ".codex/AGENTS.md".source = ./codex-agents.md;
+    ".codex/RTK.md".source = ./RTK.md;
+    ".agents/skills" = {
+      source = ../../agents/skills;
+      recursive = true;
+    };
+  };
 
   xdg.configFile."herdr/config.toml" = {
     source = ./herdr.toml;
