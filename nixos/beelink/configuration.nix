@@ -79,6 +79,7 @@
     linger = true;
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHiaw75TP13e1YbzfHgzId3zEHuubpncaqhFk+5jRGax"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDfGI/mLCn/jilLnVpyL96pvbsYK2jauB1JVZgaTxW3y cowboy-iphone-15"
     ];
   };
 
