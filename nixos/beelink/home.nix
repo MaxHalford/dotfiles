@@ -45,6 +45,8 @@ in
   programs.home-manager.enable = true;
   programs.hermes-agent.enable = true;
 
+  home.packages = [ pkgs.herdr ];
+
   # Keep Nix-managed command-line tools separate from the mutable PM cache of
   # the pre-Nix installation. The directory may hold optional runtime downloads,
   # but credentials, sessions, and all durable state remain in ~/.hermes.
@@ -98,6 +100,22 @@ in
         min_free_memory_mb = 1536;
       };
     };
+  };
+
+  systemd.user.services.herdr = {
+    Unit = {
+      Description = "Herdr persistent agent workspace server";
+      After = [ "network-online.target" ];
+      Wants = [ "network-online.target" ];
+      StartLimitIntervalSec = 0;
+    };
+    Service = {
+      ExecStart = "${pkgs.herdr}/bin/herdr server";
+      Restart = "on-failure";
+      RestartSec = 5;
+      KillMode = "mixed";
+    };
+    Install.WantedBy = [ "default.target" ];
   };
 
   # Match the supervision semantics of `hermes gateway install`, while keeping
