@@ -10,6 +10,8 @@ The Mac SSH alias is tracked in `ssh/config`. From another Tailscale device, con
 
 Herdr runs as the `max` user and listens on Unix sockets in `/home/max/.config/herdr`. The NixOS firewall exposes SSH only on the LAN and Tailscale interfaces. SSH password login, root login, agent forwarding, X11 forwarding, and device tunnels are disabled. TCP forwarding stays enabled for VS Code Remote SSH and explicit private tunnels.
 
+Docker Engine and Docker Compose support containerized home services. The `max` account can manage Docker without `sudo` after a new login. Services can bind to loopback and use Tailscale Serve or Funnel for remote access without opening another firewall port.
+
 ## Interactive development shell
 
 The Home Manager profile provides the same core interactive experience over SSH and Herdr: zsh, Powerlevel10k, completion, autosuggestions, syntax highlighting, fuzzy history search, directory jumping, Git aliases, and common CLI tools. The tracked prompt is shared with macOS, but the Beelink does not load macOS-only Homebrew, Keychain, desktop-app, or browser integration paths.

@@ -75,7 +75,7 @@
 
   users.users.max = {
     isNormalUser = true;
-    extraGroups = [ "wheel" ];
+    extraGroups = [ "wheel" "docker" ];
     linger = true;
     shell = pkgs.zsh;
     openssh.authorizedKeys.keys = [
@@ -86,6 +86,7 @@
   };
 
   environment.systemPackages = with pkgs; [
+    docker-compose
     git
     gh
     ripgrep
@@ -111,6 +112,8 @@
   services.tailscale.enable = true;
   services.fstrim.enable = true;
   services.smartd.enable = true;
+
+  virtualisation.docker.enable = true;
 
   system.stateVersion = "26.05";
 }
