@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # Git runs post-checkout with a null previous ref when `git worktree add`
-# (or a clone) checks out for the first time. For new linked worktrees, copy
-# every gitignored .env file from the primary worktree, keeping its path.
+# (or a clone) checks out for the first time. For new linked worktrees, link
+# every gitignored .env file to the primary worktree, keeping its path.
 case "$1" in
     *[!0]*) ;;
     *)
@@ -14,11 +14,12 @@ case "$1" in
             git -C "$primary" ls-files --others --ignored --exclude-standard --directory |
             while IFS= read -r path; do
                 case "${path##*/}" in .env|.env.*) ;; *) continue ;; esac
-                # Never overwrite a file the worktree already has.
-                [ -f "$primary/$path" ] && [ ! -e "$here/$path" ] || continue
+                # Never overwrite a file or symbolic link the worktree has.
+                [ -f "$primary/$path" ] || continue
+                [ ! -e "$here/$path" ] && [ ! -L "$here/$path" ] || continue
                 mkdir -p "$(dirname "$here/$path")"
-                cp -p "$primary/$path" "$here/$path"
-                printf 'Copied %s from primary worktree\n' "$path"
+                ln -s "$primary/$path" "$here/$path"
+                printf 'Linked %s to primary worktree\n' "$path"
             done
         fi
         ;;
