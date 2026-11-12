@@ -317,7 +317,10 @@ trusted_hash = "sha256:2f2313d7caabd19116ad5b0175415814ae05e91346a40c8285fc17831
 approval_mode = "approve"
 
 [apps.asdk_app_69a1d78e929881919bba0dbda1f6436d.tools."slack.slack_send_message"]
-approval_mode = "approve"
+enabled = false
+
+[apps.asdk_app_69a1d78e929881919bba0dbda1f6436d.tools."slack.slack_schedule_message"]
+enabled = false
 
 [shell_environment_policy.set]
 NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "8e86beb821b9afc846211798e0113bd4b9e79312dfcd135eb447bdb154f64071"
